@@ -36,6 +36,7 @@ It serves as a unified digital platform to streamline operations for college clu
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/akmaurya7/event-hive.git
+   
    ```
 2. **Open the project in Android Studio.**
 3. **Connect the app to Firebase**  
