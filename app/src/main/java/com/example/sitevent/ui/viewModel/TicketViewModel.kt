@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.Team
 import com.example.sitevent.data.model.Ticket
+import com.example.sitevent.data.model.User
 import com.example.sitevent.data.repository.Inteface.TicketRepository
+import com.example.sitevent.domain.CancelTicketUseCase
 import com.example.sitevent.domain.IssueTicketUseCase
+import com.example.sitevent.domain.UpdateTicketUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -19,7 +22,9 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 class TicketViewModel @Inject constructor(
     private val repo: TicketRepository,
-    private val issueTicketUseCase: IssueTicketUseCase
+    private val issueTicketUseCase: IssueTicketUseCase,
+    private val updateTicketUseCase: UpdateTicketUseCase,
+    private val cancelTicketUseCase: CancelTicketUseCase
 ) : ViewModel() {
 
     val allTickets: StateFlow<List<Ticket>> = repo.getAllTickets()
@@ -76,15 +81,29 @@ class TicketViewModel @Inject constructor(
         _actionStatus.emit(res)
     }
 
-    fun updateTicket(ticket: Ticket,team: Team) = viewModelScope.launch {
+    fun updateTicket(oldParticipantIds: List<String>,ticket: Ticket,team: Team) = viewModelScope.launch {
         _actionStatus.emit(Resource.Loading)
-        val res = repo.updateTicket(ticket,team)
+        val res = updateTicketUseCase(oldParticipantIds,ticket,team)
         _actionStatus.emit(res)
     }
 
-    fun cancelTicket(ticketId: String) = viewModelScope.launch {
+    fun cancelTicket(
+        categoryId: String,
+        clubId: String,
+        eventId: String,
+        ticketId: String,
+        teamId: String,
+        participantIds: List<String>,
+    ) = viewModelScope.launch {
         _actionStatus.emit(Resource.Loading)
-        val res = repo.cancelTicket(ticketId)
+        val res = cancelTicketUseCase(
+            categoryId,
+            clubId,
+            eventId,
+            ticketId,
+            teamId,
+            participantIds
+        )
         _actionStatus.emit(res)
     }
 
@@ -102,6 +121,33 @@ class TicketViewModel @Inject constructor(
     fun resetActionStatus() {
         viewModelScope.launch {
             _actionStatus.emit(Resource.Idle)
+        }
+    }
+
+    private val _team = MutableStateFlow<Team?>(null)
+    val team: StateFlow<Team?> = _team.asStateFlow()
+
+    fun getTeamForTicket(ticketId: String,teamId: String) = viewModelScope.launch {
+        repo.getTeamForTicket(ticketId,teamId).collect { team ->
+            _team.value = team
+        }
+    }
+
+    private val _teamsForEvent = MutableStateFlow<List<Team>>(emptyList())
+    val teamsForEvent: StateFlow<List<Team>> = _teamsForEvent.asStateFlow()
+
+    fun getTeamsForEvent(categoryId: String, clubId: String, eventId: String) = viewModelScope.launch {
+        repo.getAllTeamsForEvent(categoryId, clubId, eventId).collect { list ->
+            _teamsForEvent.value = list
+        }
+    }
+
+    private val _membersNotRegistered = MutableStateFlow<List<User>>(emptyList())
+    val membersNotRegistered: StateFlow<List<User>> = _membersNotRegistered.asStateFlow()
+
+    fun getMembersNotRegistered(categoryId: String, clubId: String, eventId: String,participantIds: List<String>) = viewModelScope.launch {
+        repo.getAllMembersNotRegistered(categoryId, clubId, eventId,participantIds).collect { list ->
+            _membersNotRegistered.value = list
         }
     }
 }

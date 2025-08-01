@@ -105,6 +105,7 @@ import java.util.Locale
 import java.util.TimeZone
 import kotlin.math.abs
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailScreen(
@@ -118,10 +119,13 @@ fun EventDetailScreen(
 ) {
     val userRes by userViewModel.observeUser.collectAsStateWithLifecycle()
     val userId = (userRes as? Resource.Success)?.data?.userId.orEmpty()
+    val team by ticketViewModel.team.collectAsStateWithLifecycle()
+    val teams by ticketViewModel.teamsForEvent.collectAsStateWithLifecycle()
 
     LaunchedEffect(categoryId, clubId, eventId) {
         eventViewModel.getEvent(categoryId, clubId, eventId)
         ticketViewModel.getTicketsForEvent(categoryId, clubId, eventId)
+        ticketViewModel.getTeamsForEvent(categoryId, clubId, eventId)
     }
 
     val event by eventViewModel.event.collectAsStateWithLifecycle()
@@ -178,8 +182,8 @@ fun EventDetailScreen(
                 AdditionalInfoSection(event!!.additionalInfo)
                 OrganizersSection(event!!.organizers)
 //                SponsorsSection(event!!)
-//                TeamsSection(tickets)
-//                TicketsSection(tickets)
+                TeamsSection(teams)
+                TicketsSection(tickets)
 //                SubEventsSection(event!!, navController, categoryId, clubId, eventId)
 //                ResultsSection(event!!)
             }
@@ -650,18 +654,21 @@ fun TeamsSection(
 ) {
     val uniqueTeams = teams.groupBy { it.teamId }.values.map { it.first() }
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = modifier.fillMaxWidth().padding(8.dp)) {
         SectionTitle("Teams (${uniqueTeams.size} Registered)")
 
         Spacer(Modifier.height(12.dp))
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            items(uniqueTeams) { team ->
-                TeamCard(team)
-            }
+//        LazyColumn(
+//            verticalArrangement = Arrangement.spacedBy(12.dp),
+//            contentPadding = PaddingValues(bottom = 16.dp)
+//        ) {
+//            items(uniqueTeams) { team ->
+//                TeamCard(team)
+//            }
+//        }
+        teams.forEach { team ->
+            TeamCard(team)
         }
     }
 }
@@ -686,6 +693,7 @@ private fun TeamCard(team: Team) {
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
+            .padding(8.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             // Accent stripe

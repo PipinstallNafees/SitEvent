@@ -4,28 +4,29 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,10 +52,7 @@ import com.example.sitevent.ui.viewModel.TicketViewModel
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.math.roundToInt
 
-
-@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun EventRegistrationScreen(
     navController: NavController,
@@ -65,62 +63,74 @@ fun EventRegistrationScreen(
     eventViewModel: EventViewModel = hiltViewModel(),
     ticketViewModel: TicketViewModel = hiltViewModel(),
 ) {
-    // Load event
+    // 1) Load event
     LaunchedEffect(eventId) {
         eventViewModel.getEvent(categoryId, clubId, eventId)
     }
     val event by eventViewModel.event.collectAsStateWithLifecycle()
     val actionStatus by ticketViewModel.actionStatus.collectAsStateWithLifecycle(null)
 
-    // UI state…
+    // 2) Local UI state
     var participation by remember {
         mutableStateOf(
             when (event?.mode) {
                 EventMode.SINGLE -> "Individual"
                 EventMode.GROUP -> "Group"
+                EventMode.BOTH -> "Group"
                 else -> "Individual"
             }
         )
     }
     var teamName by remember { mutableStateOf("") }
-    var memberCount by remember { mutableStateOf(event?.minTeamSize ?: 1) }
     val memberIds = remember { mutableStateListOf<String>() }
     LaunchedEffect(event?.minTeamSize) {
         memberIds.clear()
         repeat(event?.minTeamSize ?: 1) { memberIds.add("") }
     }
+
+    // Additional‐info answers
     val extraAnswers = remember { mutableStateMapOf<String, String>() }
         .apply { event?.additionalInfoAskFromUser?.forEach { putIfAbsent(it.key, "") } }
 
-    Surface(
-        tonalElevation = 4.dp,
-        shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    // Dialog controls
+    var showMemberDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    val candidates by ticketViewModel.membersNotRegistered.collectAsStateWithLifecycle(emptyList())
+    val selectedIds = remember { mutableStateListOf<String>() }
+
+    // Fetch candidates when dialog opens
+    LaunchedEffect(showMemberDialog) {
+        if (showMemberDialog && event != null) {
+            ticketViewModel.getMembersNotRegistered(
+                categoryId,
+                clubId,
+                eventId,
+                event!!.participantsIds
+            )
+            selectedIds.clear()
+        }
+    }
+
+    // Main content
+    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+        // Header
         Column(Modifier.padding(24.dp)) {
             Text(
                 text = event?.title ?: "",
-                style = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onPrimaryContainer)
+                style = MaterialTheme.typography.headlineSmall
             )
             Spacer(Modifier.height(8.dp))
             event?.startTime?.let {
                 Text(
                     text = "${it.toDateString()} • ${it.toTimeString()}",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
                 )
             }
         }
-    }
 
-    Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp)
-    ) {
-        // 1) Participation Mode Section
-        SectionCard(title = "How will you participate?") {
+        // Participation section
+        SectionCard(title = "Participation") {
             if (event?.mode == EventMode.BOTH) {
                 SegmentedControl(
                     options = listOf("Individual", "Group"),
@@ -135,8 +145,8 @@ fun EventRegistrationScreen(
             }
         }
 
-        // 2) Team Details (if Group)
-        if (participation == "Group") {
+        // Team details
+//        if (participation == "Group") {
             SectionCard(title = "Team Details") {
                 OutlinedTextField(
                     value = teamName,
@@ -145,39 +155,20 @@ fun EventRegistrationScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(12.dp))
-                val minSize = event?.minTeamSize?.toFloat() ?: 1f
-                val maxSize = event?.maxTeamSize?.toFloat() ?: minSize
-                Text("Members: $memberCount", style = MaterialTheme.typography.bodyMedium)
-                Slider(
-                    value = memberCount.toFloat(),
-                    onValueChange = {
-                        memberCount = it.roundToInt().coerceIn(minSize.toInt(), maxSize.toInt())
-                        if (memberCount > memberIds.size) repeat(memberCount - memberIds.size) {
-                            memberIds.add(
-                                ""
-                            )
-                        }
-                        else repeat(memberIds.size - memberCount) { memberIds.removeLast() }
-                    },
-                    valueRange = minSize..maxSize,
-                    steps = (maxSize - minSize).toInt().coerceAtLeast(0)
-                )
-                Spacer(Modifier.height(12.dp))
-                memberIds.forEachIndexed { idx, value ->
-                    OutlinedTextField(
-                        value = value,
-                        onValueChange = { memberIds[idx] = it },
-                        label = { Text("Member ${idx + 1} ID") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(8.dp))
+                Button(onClick = { showMemberDialog = true }) {
+                    Text("Select Members (${memberIds.size}/${event?.maxTeamSize})")
+                }
+                Spacer(Modifier.height(8.dp))
+                memberIds.forEach { id ->
+                    Text("• $id", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(4.dp))
                 }
             }
-        }
+//        }
 
-        // 3) Additional Questions
+        // Additional-info fields
         if (!event?.additionalInfoAskFromUser.isNullOrEmpty()) {
-            SectionCard(title = "Extra Info") {
+            SectionCard(title = "Additional Information") {
                 event!!.additionalInfoAskFromUser.forEach { info ->
                     OutlinedTextField(
                         value = extraAnswers[info.key]!!,
@@ -191,12 +182,12 @@ fun EventRegistrationScreen(
             }
         }
 
-        // 4) Submit Button
+        // Submit button
         Button(
             onClick = {
                 val team = Team(
                     teamName = teamName,
-                    teamMemberIds = if (participation == "Group") memberIds.filter { it.isNotBlank() } else emptyList(),
+                    teamMemberIds = memberIds.filter { it.isNotBlank() },
                     teamLeaderId = userId,
                     eventId = eventId,
                     clubId = clubId,
@@ -215,38 +206,91 @@ fun EventRegistrationScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(16.dp)
                 .height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = ButtonDefaults.filledTonalButtonColors()
+            shape = RoundedCornerShape(28.dp)
         ) {
-            Text("Confirm Registration", style = MaterialTheme.typography.labelLarge)
+            Text("Register", style = MaterialTheme.typography.labelLarge)
         }
+    }
 
-        // 5) Loading/Error Handling
-        when (actionStatus) {
-            is Resource.Loading -> {
-                Spacer(Modifier.height(16.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    // Member-selection dialog
+    if (showMemberDialog) {
+        AlertDialog(
+            onDismissRequest = { showMemberDialog = false },
+            title = { Text("Select Members") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("Search by ID") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    val filtered = candidates.filter {
+                        it.userId.contains(searchQuery, ignoreCase = true)
+                    }
+                    Column(modifier = Modifier.height(200.dp)) {
+                        filtered.forEach { user ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        if (user.userId in selectedIds) selectedIds.remove(user.userId)
+                                        else if (selectedIds.size < (event?.maxTeamSize
+                                                ?: Int.MAX_VALUE)
+                                        )
+                                            selectedIds.add(user.userId)
+                                    }
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Checkbox(
+                                    checked = user.userId in selectedIds,
+                                    onCheckedChange = {
+                                        if (it && selectedIds.size < (event?.maxTeamSize
+                                                ?: Int.MAX_VALUE)
+                                        )
+                                            selectedIds.add(user.userId)
+                                        else
+                                            selectedIds.remove(user.userId)
+                                    }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(user.userId, style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                val minSize = event?.minTeamSize ?: 1
+                Button(
+                    onClick = {
+                        memberIds.clear()
+                        memberIds.addAll(selectedIds)
+                        showMemberDialog = false
+                    },
+                    enabled = selectedIds.size in minSize..(event?.maxTeamSize ?: Int.MAX_VALUE)
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMemberDialog = false }) {
+                    Text("Cancel")
                 }
             }
+        )
+    }
 
-            is Resource.Error -> {
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = (actionStatus as Resource.Error).exception.localizedMessage
-                        ?: "Something went wrong",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            is Resource.Success -> {
-                LaunchedEffect(Unit) { navController.popBackStack() }
-            }
-
-            else -> {}
-        }
+    // Handle Loading / Error / Success
+    when (actionStatus) {
+        is Resource.Loading -> FullScreenLoading()
+        is Resource.Error -> FullScreenError((actionStatus as Resource.Error).exception)
+        is Resource.Success -> LaunchedEffect(Unit) { navController.popBackStack() }
+        else -> {}
     }
 }
 
@@ -257,10 +301,10 @@ private fun SectionCard(
 ) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(8.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
@@ -300,6 +344,20 @@ private fun SegmentedControl(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun FullScreenLoading() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun FullScreenError(e: Throwable?) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(e?.localizedMessage ?: "Error", color = MaterialTheme.colorScheme.error)
     }
 }
 

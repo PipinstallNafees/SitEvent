@@ -110,17 +110,98 @@ class EventRepositoryImpl @Inject constructor(
         categoryId: String,
         clubId: String,
         eventId: String,
-        ticketId: String
+        ticketId: String,
+        teamId: String,
+        participantIds: List<String>
     ): Resource<Unit> {
         return try {
-            eventsCollection(categoryId, clubId)
-                .document(eventId)
-                .update("ticketIds", FieldValue.arrayUnion(ticketId))
-                .await()
+            val batch = firebaseFirestore.batch()
+            val eventRef = eventsCollection(categoryId, clubId).document(eventId)
+
+            // append one ticketId
+            batch.update(
+                eventRef,
+                "ticketIds",
+                FieldValue.arrayUnion(ticketId)
+            )
+            // append one teamId
+            batch.update(
+                eventRef,
+                "teamIds",
+                FieldValue.arrayUnion(teamId)
+            )
+            // append ALL participant IDs at once
+            batch.update(
+                eventRef,
+                "participantsIds",
+                FieldValue.arrayUnion(*participantIds.toTypedArray())
+            )
+
+            batch.commit().await()
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e)
         }
     }
 
+
+    override suspend fun updateTicketInEvent(
+        categoryId: String,
+        clubId: String,
+        eventId: String,
+        ticketId: String,
+        teamId: String,
+        oldParticipantIds: List<String>,
+        participantIds: List<String>,
+    ): Resource<Unit> {
+        return try {
+            val batch = firebaseFirestore.batch()
+            val eventRef = eventsCollection(categoryId, clubId).document(eventId)
+
+            batch.update(eventRef, "ticketIds", FieldValue.arrayUnion(ticketId))
+            batch.update(eventRef, "teamIds", FieldValue.arrayUnion(teamId))
+            batch.update(
+                eventRef,
+                "participantsIds",
+                FieldValue.arrayRemove(*oldParticipantIds.toTypedArray())
+            )
+            batch.update(
+                eventRef,
+                "participantsIds",
+                FieldValue.arrayUnion(*participantIds.toTypedArray())
+            )
+
+            batch.commit().await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
+
+    override suspend fun cancelTicketInEvent(
+        categoryId: String,
+        clubId: String,
+        eventId: String,
+        ticketId: String,
+        teamId: String,
+        participantIds: List<String>,
+    ): Resource<Unit> {
+        return try {
+            val batch = firebaseFirestore.batch()
+            val eventRef = eventsCollection(categoryId, clubId).document(eventId)
+
+            batch.update(eventRef, "ticketIds", FieldValue.arrayRemove(ticketId))
+            batch.update(eventRef, "teamIds", FieldValue.arrayRemove(teamId))
+            batch.update(
+                eventRef,
+                "participantsIds",
+                FieldValue.arrayRemove(*participantIds.toTypedArray())
+            )
+
+            batch.commit().await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
 }
