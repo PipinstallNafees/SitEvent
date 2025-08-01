@@ -1,17 +1,18 @@
 package com.example.sitevent.data.repository.Inteface
 
 import com.example.sitevent.data.Resource
+import com.example.sitevent.data.model.Team
 import com.example.sitevent.data.model.Ticket
 import kotlinx.coroutines.flow.Flow
 
 
 interface TicketRepository {
 
-    suspend fun issueTicket(ticket: Ticket): Resource<Unit>
+    suspend fun issueTicket(ticket: Ticket,team: Team): Resource<Unit>
 
-    suspend fun updateTicket(ticket: Ticket): Resource<Unit>
+    suspend fun updateTicket(ticket: Ticket,team: Team): Resource<Unit>
 
-    suspend fun deleteTicket(ticket: Ticket): Resource<Unit>
+    suspend fun cancelTicket(ticketId: String): Resource<Unit>
 
     suspend fun redeemTicket(categoryId: String, clubId: String, eventId: String, ticketId: String,userId: String): Resource<Unit>
 

@@ -7,8 +7,13 @@ import com.example.sitevent.data.model.Club
 import com.example.sitevent.data.model.ClubUser
 import com.example.sitevent.data.repository.Inteface.ClubRepository
 import com.example.sitevent.data.repository.Inteface.UserRepository
+import com.example.sitevent.domain.CreateClubUseCase
+import com.example.sitevent.domain.DeleteClubUseCase
+import com.example.sitevent.domain.JoinClubUseCase
+import com.example.sitevent.domain.LeaveClubUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -18,6 +23,10 @@ import javax.inject.Inject
 class ClubViewModel @Inject constructor(
     private val repo: ClubRepository,
     private val userRepo: UserRepository,
+    private val createClubUseCase: CreateClubUseCase,  // renamed
+    private val deleteClubUseCase: DeleteClubUseCase,
+    private val joinClubUseCase: JoinClubUseCase,
+    private val leaveClubUseCase: LeaveClubUseCase
 ) : ViewModel() {
 
     val allClubs: StateFlow<List<Club>> = repo.getAllClubs()
@@ -53,8 +62,10 @@ class ClubViewModel @Inject constructor(
 
     fun createClub(club: Club) = viewModelScope.launch {
         _operationStatus.emit(Resource.Loading)
-        _operationStatus.emit(repo.createClub(club))
+        _operationStatus.emit(createClubUseCase(club))
     }
+
+
 
     fun updateClub(club: Club) = viewModelScope.launch {
         _operationStatus.emit(Resource.Loading)
@@ -63,7 +74,7 @@ class ClubViewModel @Inject constructor(
 
     fun deleteClub(categoryId: String, clubId: String) = viewModelScope.launch {
         _operationStatus.emit(Resource.Loading)
-        _operationStatus.emit(repo.deleteClub(categoryId, clubId))
+        _operationStatus.emit(deleteClubUseCase(categoryId, clubId))
     }
 
     // Join/leave club
@@ -71,41 +82,15 @@ class ClubViewModel @Inject constructor(
     val joinState: StateFlow<Resource<Unit>> = _joinState.asStateFlow()
 
     fun joinClub(categoryId: String, clubId: String, userId: String) = viewModelScope.launch {
-        _joinState.value = Resource.Loading
-        val clubRes = repo.joinClub(categoryId, clubId, userId)
-        val userRes = if (clubRes is Resource.Success) {
-            userRepo.joinClubForUser(userId, categoryId, clubId)
-        } else {
-            Resource.Error(Exception("Join failed"))
-        }
 
-        _joinState.value = if (clubRes is Resource.Success && userRes is Resource.Success) {
-            Resource.Success(Unit).also { getClub(categoryId, clubId) }
-        } else {
-            val err = (clubRes as? Resource.Error)?.exception
-                ?: (userRes as? Resource.Error)?.exception
-                ?: Exception("Unknown error")
-            Resource.Error(err) // Pass the actual Exception
-        }
+        _operationStatus.emit(Resource.Loading)
+        _operationStatus.emit(joinClubUseCase(categoryId, clubId, userId))
     }
 
     fun leaveClub(categoryId: String, clubId: String, userId: String) = viewModelScope.launch {
-        _joinState.value = Resource.Loading
-        val clubRes = repo.leaveClub(userId, categoryId, clubId)
-        val userRes = if (clubRes is Resource.Success) {
-            userRepo.leaveClubForUser(userId, categoryId, clubId)
-        } else {
-            Resource.Error(Exception("Leave failed"))
-        }
 
-        _joinState.value = if (clubRes is Resource.Success && userRes is Resource.Success) {
-            Resource.Success(Unit).also { getClub(categoryId, clubId) }
-        } else {
-            val err = (clubRes as? Resource.Error)?.exception
-                ?: (userRes as? Resource.Error)?.exception
-                ?: Exception("Unknown error")
-            Resource.Error(err) // Pass the actual Exception
-        }
+        _operationStatus.emit(Resource.Loading)
+        _operationStatus.emit(leaveClubUseCase(categoryId, clubId, userId))
     }
 
     private val _changeVisibility = MutableStateFlow<Triple<String, String, Boolean>?>(null)

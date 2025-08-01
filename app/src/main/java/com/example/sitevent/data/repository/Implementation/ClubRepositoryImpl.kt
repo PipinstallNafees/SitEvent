@@ -30,14 +30,12 @@ class ClubRepositoryImpl @Inject constructor(
 
 
     override suspend fun createClub(club: Club): Resource<Unit> = try {
-        clubsCollection(club.categoryId)
-            .document(club.clubId)
-            .set(club)
-            .await()
 
         firebaseFirestore.collection(CATEGORIES)
             .document(club.categoryId)
-            .update("clubs", FieldValue.arrayUnion(club.clubId))
+            .collection(CLUBS)
+            .document(club.clubId)
+            .set(club)
             .await()
 
         Resource.Success(Unit)
@@ -47,7 +45,9 @@ class ClubRepositoryImpl @Inject constructor(
 
 
     override suspend fun updateClub(club: Club): Resource<Unit> = try {
-        clubsCollection(club.categoryId)
+        firebaseFirestore.collection(CATEGORIES)
+            .document(club.categoryId)
+            .collection(CLUBS)
             .document(club.clubId)
             .set(club)
             .await()
@@ -57,7 +57,8 @@ class ClubRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteClub(categoryId: String, clubId: String): Resource<Unit> = try {
-        clubsCollection(categoryId)
+        firebaseFirestore.collection(CATEGORIES)
+            .document(categoryId).collection(CLUBS)
             .document(clubId)
             .delete()
             .await()
@@ -68,7 +69,10 @@ class ClubRepositoryImpl @Inject constructor(
 
 
     override fun getClub(categoryId: String, clubId: String): Flow<Club?> = callbackFlow {
-        val registration: ListenerRegistration = clubsCollection(categoryId)
+        val registration: ListenerRegistration = firebaseFirestore
+            .collection(CATEGORIES)
+            .document(categoryId)
+            .collection(CLUBS)
             .document(clubId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -81,7 +85,10 @@ class ClubRepositoryImpl @Inject constructor(
     }
 
     override fun getAllClubsByCategory(categoryId: String): Flow<List<Club>> = callbackFlow {
-        val registration: ListenerRegistration = clubsCollection(categoryId)
+        val registration: ListenerRegistration = firebaseFirestore
+            .collection(CATEGORIES)
+            .document(categoryId)
+            .collection(CLUBS)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -113,48 +120,61 @@ class ClubRepositoryImpl @Inject constructor(
     override suspend fun joinClub(
         categoryId: String,
         clubId: String,
-        userId: String,
+        userId: String
     ): Resource<Unit> = try {
-        // 1) write member doc under Members
+        val batch = firebaseFirestore.batch()
 
-        val clubUser = ClubUser(userId = userId, clubId = clubId, categoryId = categoryId)
+        val clubUser = ClubUser(userId, clubId, categoryId)
 
-        clubsCollection(categoryId)
+        val memberRef = firebaseFirestore
+            .collection(CATEGORIES)
+            .document(categoryId)
+            .collection(CLUBS)
             .document(clubId)
             .collection(MEMBERS)
             .document(userId)
-            .set(clubUser)
-            .await()
 
-        // 2) append to Club.members array
-        clubsCollection(categoryId)
+        val clubRef = firebaseFirestore.collection(CATEGORIES)
+            .document(categoryId)
+            .collection(CLUBS)
             .document(clubId)
-            .update("members", FieldValue.arrayUnion(userId))
-            .await()
+
+
+        batch.set(memberRef, clubUser)
+        batch.update(clubRef, "members", FieldValue.arrayUnion(userId))
+        batch.commit().await()
+
 
         Resource.Success(Unit)
-    } catch (e: Exception) {
+    } catch(e: Exception) {
         Resource.Error(e)
     }
 
+
     override suspend fun leaveClub(
-        userId: String,
         categoryId: String,
         clubId: String,
+        userId: String,
     ): Resource<Unit> = try {
-        // 1) delete member doc
-        clubsCollection(categoryId)
+        val batch = firebaseFirestore.batch()
+
+        val memberRef = firebaseFirestore
+            .collection(CATEGORIES)
+            .document(categoryId)
+            .collection(CLUBS)
             .document(clubId)
             .collection(MEMBERS)
             .document(userId)
-            .delete()
-            .await()
 
-        // 2) remove from Club.members array
-        clubsCollection(categoryId)
+        val clubRef = firebaseFirestore
+            .collection(CATEGORIES)
+            .document(categoryId)
+            .collection(CLUBS)
             .document(clubId)
-            .update("members", FieldValue.arrayRemove(userId))
-            .await()
+
+        batch.delete(memberRef)
+        batch.update(clubRef, "members", FieldValue.arrayRemove(userId))
+        batch.commit().await()
 
         Resource.Success(Unit)
     } catch (e: Exception) {
@@ -167,7 +187,10 @@ class ClubRepositoryImpl @Inject constructor(
         visibility: Boolean,
     ): Resource<Unit> {
         return try {
-            clubsCollection(categoryId)
+            firebaseFirestore
+                .collection(CATEGORIES)
+                .document(categoryId)
+                .collection(CLUBS)
                 .document(clubId)
                 .update("isPublic", visibility)
                 .await()
@@ -177,11 +200,52 @@ class ClubRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun addEventToClub(
+        categoryId: String,
+        clubId: String,
+        eventId: String,
+    ): Resource<Unit> {
+        return try {
+            firebaseFirestore
+                .collection(CATEGORIES)
+                .document(categoryId)
+                .collection(CLUBS)
+                .document(clubId)
+                .update("events", FieldValue.arrayUnion(eventId))
+                .await()
+            Resource.Success(Unit)
+        }
+        catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
 
+    override suspend fun removeEventFromClub(
+        categoryId: String,
+        clubId: String,
+        eventId: String,
+    ): Resource<Unit>{
+        return try {
+            firebaseFirestore
+                .collection(CATEGORIES)
+                .document(categoryId)
+                .collection(CLUBS)
+                .document(clubId)
+                .update("events", FieldValue.arrayRemove(eventId))
+                .await()
+            Resource.Success(Unit)
+        }
+        catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
 
     override fun getAllClubMembers(categoryId: String, clubId: String): Flow<List<ClubUser>> =
         callbackFlow {
-            val registration: ListenerRegistration = clubsCollection(categoryId)
+            val registration: ListenerRegistration = firebaseFirestore
+                .collection(CATEGORIES)
+                .document(categoryId)
+                .collection(CLUBS)
                 .document(clubId)
                 .collection(MEMBERS)
                 .addSnapshotListener { snapshot, error ->
@@ -201,7 +265,10 @@ class ClubRepositoryImpl @Inject constructor(
         clubId: String,
         userId: String,
     ): Flow<ClubUser?> = callbackFlow {
-        val registration: ListenerRegistration = clubsCollection(categoryId)
+        val registration: ListenerRegistration = firebaseFirestore
+            .collection(CATEGORIES)
+            .document(categoryId)
+            .collection(CLUBS)
             .document(clubId)
             .collection(MEMBERS)
             .document(userId)
@@ -222,7 +289,10 @@ class ClubRepositoryImpl @Inject constructor(
         userId: String,
         role: String,
     ): Resource<Unit> {
-        val docRef = clubsCollection(categoryId)
+        val docRef = firebaseFirestore
+            .collection(CATEGORIES)
+            .document(categoryId)
+            .collection(CLUBS)
             .document(clubId)
             .collection(MEMBERS)
             .document(userId)

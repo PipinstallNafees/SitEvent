@@ -162,7 +162,7 @@ fun CreateEventScreen(
                                 isOnline = isOnline,
                                 registrationRequired = registrationRequired,
                                 haveSubEvent = haveSubEvents,
-                                additionalInfoDuringRegistration = extraInfo
+                                additionalInfo = extraInfo
                             )
                         )
                     },

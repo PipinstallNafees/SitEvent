@@ -90,6 +90,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
     implementation ("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
 
     //datasotore
     implementation("androidx.datastore:datastore-preferences:1.1.7")

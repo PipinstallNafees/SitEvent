@@ -13,6 +13,7 @@ interface EventRepository {
     fun getAllEvents(): Flow<List<Event>>
     fun getEventsByClubId(categoryId: String,clubId: String): Flow<List<Event>>
 
+    suspend fun saveTicketInEvent(categoryId: String, clubId: String, eventId: String, ticketId: String): Resource<Unit>
 
 //    suspend fun getEventsByOrganizerId(organizerId: String): Resource<List<Event>>
 //    suspend fun getEventsByCategoryId(categoryId: String): Resource<List<Event>>

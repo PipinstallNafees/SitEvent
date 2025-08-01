@@ -12,7 +12,7 @@ data class User(
     val profileImageUrl: String? = null,
     val clubs: List<UserClub> = emptyList(),
     val events: List<UserEvent> = emptyList(),
-    val tickets: List<UserTicket> = emptyList(),
+    val tickets: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
     val lastSeenAt: Long? = null,
     val isOnline: Boolean = false
@@ -20,7 +20,8 @@ data class User(
 
 data class UserClub(
     val clubId: String = "",
-    val categoryId: String = ""
+    val categoryId: String = "",
+    val role: ClubRole = ClubRole.MEMBER
 )
 
 data class UserEvent(
