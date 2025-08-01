@@ -72,9 +72,12 @@ class UserRepositoryImpl @Inject constructor(
                 clubId = clubId,
                 categoryId = categoryId,
             )
-            val userRef = userCol.document(userId)
+            userCol.document(userId)
+                .collection("UserClubs")
+                .document(clubId)
+                .set(userClub)
+                .await()
 
-            userRef.update("clubs", FieldValue.arrayUnion(userClub)).await()
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e)
@@ -82,27 +85,24 @@ class UserRepositoryImpl @Inject constructor(
     }
     override suspend fun leaveClubForUser(userId: String, categoryId: String, clubId: String): Resource<Unit> {
         return try {
-            val userRef = userCol.document(userId)
-            val userClub = UserClub(
-                clubId = clubId,
-                categoryId = categoryId,
-            )
-            userRef.update("clubs", FieldValue.arrayRemove(userClub)).await()
+
+            userCol.document(userId)
+                .collection("UserClubs")
+                .document(clubId)
+                .delete()
+                .await()
+
             Resource.Success(Unit)
             } catch (e: Exception) {
             Resource.Error(e)
         }
     }
 
-    override suspend fun issueTicketForUser(userId: String, categoryId: String, clubId: String, eventId: String): Resource<Unit> {
+    override suspend fun issueTicketForUser(userId: String, categoryId: String, clubId: String, eventId: String,ticketId:String): Resource<Unit> {
         return try {
             val userRef = userCol.document(userId)
-            val userTicket = UserTicket(
-                categoryId = categoryId,
-                clubId = clubId,
-                eventId = eventId,
-            )
-            userRef.update("tickets", FieldValue.arrayUnion(userTicket)).await()
+
+            userRef.update("tickets", FieldValue.arrayUnion(ticketId)).await()
             Resource.Success(Unit)
 
         }
@@ -110,6 +110,8 @@ class UserRepositoryImpl @Inject constructor(
             Resource.Error(e)
         }
     }
+
+
 
     // Real-time streams
     override fun observeAllUsers(): Flow<List<User>> = callbackFlow {

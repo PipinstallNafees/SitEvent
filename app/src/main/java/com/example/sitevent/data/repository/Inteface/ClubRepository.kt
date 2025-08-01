@@ -15,8 +15,12 @@ interface ClubRepository {
     fun getAllClubs(): Flow<List<Club>>
 
     suspend fun joinClub(categoryId: String, clubId: String, userId: String): Resource<Unit>
-    suspend fun leaveClub(userId: String, categoryId: String, clubId: String): Resource<Unit>
+    suspend fun leaveClub(categoryId: String, clubId: String,userId: String): Resource<Unit>
     suspend fun changeClubVisibility(categoryId: String, clubId: String, visibility: Boolean): Resource<Unit>
+
+
+    suspend fun addEventToClub(categoryId: String, clubId: String, eventId: String): Resource<Unit>
+    suspend fun removeEventFromClub(categoryId: String, clubId: String, eventId: String): Resource<Unit>
 
     //club member collection
     fun getAllClubMembers(categoryId: String, clubId: String): Flow<List<ClubUser>>

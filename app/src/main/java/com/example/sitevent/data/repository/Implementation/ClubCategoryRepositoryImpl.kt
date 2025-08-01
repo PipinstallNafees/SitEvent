@@ -4,6 +4,7 @@ import androidx.compose.animation.core.snap
 import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.Category
 import com.example.sitevent.data.repository.Inteface.ClubCategoryRepository
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.channels.awaitClose
@@ -16,6 +17,8 @@ class ClubCategoryRepositoryImpl @Inject constructor(
     private val firebaseFirestore: FirebaseFirestore
 ) : ClubCategoryRepository {
     private val categoryCollection = firebaseFirestore.collection("Categories")
+    private val CLUBS = "Clubs"
+    private val CATEGORIES = "Categories"
 
     override suspend fun saveCategory(category: Category): Resource<Unit> {
         return try {
@@ -43,6 +46,31 @@ class ClubCategoryRepositoryImpl @Inject constructor(
         return try {
             categoryCollection.document(categoryId)
                 .delete()
+                .await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
+
+    override suspend fun addClubToCategory(categoryId: String, clubId: String): Resource<Unit> {
+        return try {
+            firebaseFirestore.collection(CATEGORIES)
+                .document(categoryId)
+                .update("clubs", FieldValue.arrayUnion(clubId))
+                .await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e)
+        }
+
+    }
+
+    override suspend fun removeClubFromCategory(categoryId: String, clubId: String): Resource<Unit> {
+        return try {
+            firebaseFirestore.collection(CATEGORIES)
+                .document(categoryId)
+                .update("clubs", FieldValue.arrayRemove(clubId))
                 .await()
             Resource.Success(Unit)
         } catch (e: Exception) {

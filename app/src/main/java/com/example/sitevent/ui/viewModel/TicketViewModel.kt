@@ -3,8 +3,10 @@ package com.example.sitevent.ui.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sitevent.data.Resource
+import com.example.sitevent.data.model.Team
 import com.example.sitevent.data.model.Ticket
 import com.example.sitevent.data.repository.Inteface.TicketRepository
+import com.example.sitevent.domain.IssueTicketUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -16,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
 class TicketViewModel @Inject constructor(
-    private val repo: TicketRepository
+    private val repo: TicketRepository,
+    private val issueTicketUseCase: IssueTicketUseCase
 ) : ViewModel() {
 
     val allTickets: StateFlow<List<Ticket>> = repo.getAllTickets()
@@ -67,21 +70,21 @@ class TicketViewModel @Inject constructor(
     private val _actionStatus = MutableSharedFlow<Resource<Unit>>(replay = 0)
     val actionStatus: SharedFlow<Resource<Unit>> = _actionStatus.asSharedFlow()
 
-    fun issueTicket(ticket: Ticket) = viewModelScope.launch {
+    fun issueTicket(ticket: Ticket,team: Team) = viewModelScope.launch {
         _actionStatus.emit(Resource.Loading)
-        val res = repo.issueTicket(ticket)
+        val res = issueTicketUseCase(ticket,team)
         _actionStatus.emit(res)
     }
 
-    fun updateTicket(ticket: Ticket) = viewModelScope.launch {
+    fun updateTicket(ticket: Ticket,team: Team) = viewModelScope.launch {
         _actionStatus.emit(Resource.Loading)
-        val res = repo.updateTicket(ticket)
+        val res = repo.updateTicket(ticket,team)
         _actionStatus.emit(res)
     }
 
-    fun deleteTicket(ticket: Ticket) = viewModelScope.launch {
+    fun cancelTicket(ticketId: String) = viewModelScope.launch {
         _actionStatus.emit(Resource.Loading)
-        val res = repo.deleteTicket(ticket)
+        val res = repo.cancelTicket(ticketId)
         _actionStatus.emit(res)
     }
 

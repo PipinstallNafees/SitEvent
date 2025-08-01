@@ -37,6 +37,7 @@ import com.example.sitevent.ui.screen.Club.CreateClubScreen
 import com.example.sitevent.ui.screen.Club.EditClubDetailScreen
 import com.example.sitevent.ui.screen.Club.Event.CreateEventScreen
 import com.example.sitevent.ui.screen.Club.Event.EventDetailScreen
+import com.example.sitevent.ui.screen.Club.Event.EventRegistrationScreen
 import com.example.sitevent.ui.screen.Club.ManageClubRolesScreen
 import com.example.sitevent.ui.screen.ClubCategory.AllCategoryScreen
 import com.example.sitevent.ui.screen.ClubCategory.CreateCategoryScreen
@@ -60,7 +61,7 @@ enum class Screen {
 
     CREATE_EVENT_SCREEN,
     EVENT_DETAIL_SCREEN,
-
+    EVENT_REGISTRATION_SCREEN,
     //bottom bar
     HOME,
     All_CLUBS_SCREEN,
@@ -111,6 +112,12 @@ sealed class NavigationItem(val route: String) {
         fun createRoute(categoryId: String, clubId: String, eventId: String) =
             "${Screen.EVENT_DETAIL_SCREEN.name}/$categoryId/$clubId/$eventId"
     }
+    object EventRegistration :
+        NavigationItem("${Screen.EVENT_REGISTRATION_SCREEN.name}/{categoryId}/{clubId}/{eventId}")
+    {
+        fun createRoute(categoryId: String, clubId: String, eventId: String) =
+            "${Screen.EVENT_REGISTRATION_SCREEN.name}/$categoryId/$clubId/$eventId"
+    }
 
 
     object AllClubs : NavigationItem(Screen.All_CLUBS_SCREEN.name)
@@ -152,7 +159,8 @@ sealed class NavigationItem(val route: String) {
 
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun AppNavigation(
     authViewModel: AuthViewModel = hiltViewModel(),
@@ -343,6 +351,27 @@ fun AppNavigation(
                 categoryId = categoryId,
                 clubId = clubId,
                 eventId = eventId
+            )
+        }
+
+        composable(
+            route = NavigationItem.EventRegistration.route,
+            arguments = listOf(
+                navArgument("categoryId") { type = NavType.StringType },
+                navArgument("clubId") { type = NavType.StringType },
+                navArgument("eventId") { type = NavType.StringType }
+            )
+        ) {
+            val args = it.arguments!!
+            val categoryId = args.getString("categoryId") ?: ""
+            val clubId = args.getString("clubId") ?: ""
+            val eventId = args.getString("eventId") ?: ""
+            EventRegistrationScreen(
+                navController = navController,
+                categoryId = categoryId,
+                clubId = clubId,
+                eventId = eventId,
+                userId = userId
             )
         }
         composable(NavigationItem.Chats.route) {

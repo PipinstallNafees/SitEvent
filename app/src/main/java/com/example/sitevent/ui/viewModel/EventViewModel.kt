@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.Event
 import com.example.sitevent.data.repository.Inteface.EventRepository
+import com.example.sitevent.domain.CreateEventUseCase
+import com.example.sitevent.domain.DeleteEventUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -14,7 +16,9 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class EventViewModel @Inject constructor(
-    private val repo: EventRepository
+    private val repo: EventRepository,
+    private val createEventUseCase: CreateEventUseCase,
+    private val deleteEventUseCase: DeleteEventUseCase
 ) : ViewModel() {
 
     // ——————————————————————————————————————————————————————————————
@@ -53,7 +57,7 @@ class EventViewModel @Inject constructor(
 
     fun createEvent(event: Event) = viewModelScope.launch {
         _operationStatus.emit(Resource.Loading)
-        val result = repo.createEvent(event)
+        val result = createEventUseCase(event)
         _operationStatus.emit(result)
     }
 
@@ -65,7 +69,7 @@ class EventViewModel @Inject constructor(
 
     fun deleteEvent(categoryId:String, clubId: String, eventId: String) = viewModelScope.launch {
         _operationStatus.emit(Resource.Loading)
-        val result = repo.deleteEvent(categoryId, clubId  ,eventId)
+        val result = repo.deleteEvent(categoryId, clubId, eventId)
         _operationStatus.emit(result)
     }
 

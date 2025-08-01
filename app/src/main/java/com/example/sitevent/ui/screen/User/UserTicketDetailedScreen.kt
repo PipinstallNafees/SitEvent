@@ -94,9 +94,7 @@ fun UserTicketDetailedScreen(
                     ticket!!.redeemedAt?.let {
                         InfoRow("Redeemed At", formatTimestamp(it.seconds * 1000))
                     }
-                    if (ticket!!.groupMemberIds.isNotEmpty()) {
-                        InfoRow("Group Members", ticket!!.groupMemberIds.size.toString())
-                    }
+
                     Button(
                         onClick = {},
                         modifier = Modifier.fillMaxWidth()

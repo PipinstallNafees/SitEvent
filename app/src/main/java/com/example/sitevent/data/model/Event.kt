@@ -2,7 +2,7 @@ package com.example.sitevent.data.model
 
 import com.google.firebase.Timestamp
 
-enum class EventRole { ADMIN, OC, MOD, PARTICIPANT }
+enum class EventRole { ADMIN, OC, MOD, PARTICIPANT,COORDINATOR,SPEAKER }
 
 data class EventOrganizer(
     val userId: String,
@@ -60,13 +60,30 @@ data class Event(
     val eventResults: List<String> = emptyList(),
     val haveSubEvent: Boolean = false,
     val subEventIds: List<String> = emptyList(),
-    val additionalInfoDuringRegistration: List<AdditionalInfo> = emptyList(),
+    val additionalInfo: List<AdditionalInfo> = emptyList(),
+    val additionalInfoAskFromUser: List<AdditionalInfoAskFromUser> = emptyList(),
 )
 
 data class AdditionalInfo(
     val key: String = "",
     val value: String = "",
 )
+data class AdditionalInfoAskFromUser(
+    val key: String = "",
+    val value: String = "",
+    val required: Boolean = false,
+)
+
+data class EventResult(
+    val eventId: String,
+    val subEventId: String? = null,
+    val categoryId: String,
+    val winnerTeamId: String,
+    val runnerUpTeamIds: List<Map<String, Int>> = emptyList(), //team id with rank
+    val teamScores: Map<String, Int> = emptyMap(),  // team id with score
+    val recordedAt: Long = System.currentTimeMillis()
+)
+
 
 data class Sponsor(
     val sponsorId: String = System.currentTimeMillis().toString(),
@@ -89,5 +106,6 @@ data class Team(
     val teamName: String = "",
     val teamMemberIds: List<String> = emptyList(),
     val teamLeaderId: String = "",
+    val teamScore: Int = 0,
 )
 
