@@ -43,7 +43,6 @@ data class Event(
     val editedAt: Long = System.currentTimeMillis(),
 
     val organizers: List<EventOrganizer> = emptyList(),
-    val ticketIds: List<String> = emptyList(),
 
     val sponsors: List<String> = emptyList(),
 
@@ -52,7 +51,9 @@ data class Event(
     val minTeamSize: Int = 1,                // smallest allowed signup
     val maxTeamSize: Int = 1,                // largest allowed signup
 
+    val ticketIds: List<String> = emptyList(),
     val teamsIds: List<String> = emptyList(),
+    val participantsIds: List<String> = emptyList(),
 
     val isOnline: Boolean = false,
     val registrationRequired: Boolean = false,
@@ -95,17 +96,5 @@ data class Sponsor(
     val eventId: String = "",
     val clubId: String = "",
     val categoryId: String = "",
-)
-
-data class Team(
-    val teamId: String = System.currentTimeMillis().toString(),
-    val eventId: String = "",
-    val subEventId: String? = null,
-    val clubId: String = "",
-    val categoryId: String = "",
-    val teamName: String = "",
-    val teamMemberIds: List<String> = emptyList(),
-    val teamLeaderId: String = "",
-    val teamScore: Int = 0,
 )
 

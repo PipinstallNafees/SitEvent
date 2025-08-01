@@ -4,6 +4,7 @@ import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.RegistrationStatus
 import com.example.sitevent.data.model.Team
 import com.example.sitevent.data.model.Ticket
+import com.example.sitevent.data.model.User
 import com.example.sitevent.data.repository.Inteface.TicketRepository
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -205,4 +206,88 @@ class TicketRepositoryImpl @Inject constructor(
             }
         awaitClose { registration.remove() }
     }
+
+    override fun getTeamForTicket(
+        ticketId: String,
+        teamId: String
+    ): Flow<Team?> = callbackFlow {
+        val registration: ListenerRegistration = firestore
+            .collection(TICKETS)
+            .document(ticketId)
+            .collection(TEAMS)
+            .document(teamId)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    close(err)
+                    return@addSnapshotListener
+                }
+                snap?.let { trySend(it.toObject(Team::class.java)).isSuccess }
+            }
+        awaitClose { registration.remove() }
+
+    }
+
+    override fun getAllTeamsForEvent(
+        categoryId: String,
+        clubId: String,
+        eventId: String
+    ): Flow<List<Team>> = callbackFlow{
+        val registration: ListenerRegistration = firestore
+            .collection(TICKETS)
+            .whereEqualTo("eventId",eventId)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    close(err)
+                    return@addSnapshotListener
+                }
+                snap?.let { trySend(it.toObjects(Team::class.java)).isSuccess }
+            }
+        awaitClose { registration.remove() }
+    }
+
+    override fun getAllMembersNotRegistered(
+        categoryId: String,
+        clubId:     String,
+        eventId:    String,
+        participantIds: List<String>
+    ): Flow<List<User>> = callbackFlow {
+        val query = when {
+            participantIds.isEmpty() -> {
+                // no filter → get everyone
+                firestore.collection(USER)
+            }
+            participantIds.size <= 10 -> {
+                // safe to use whereNotIn
+                firestore.collection(USER)
+                    .whereNotIn("userId", participantIds)
+            }
+            else -> {
+                // too many IDs for whereNotIn: fetch all, filter in code below
+                firestore.collection(USER)
+            }
+        }
+
+        val registration = query.addSnapshotListener { snap, err ->
+            if (err != null) {
+                close(err)
+                return@addSnapshotListener
+            }
+            snap?.let {
+                val all = it.toObjects(User::class.java)
+                val filtered = if (participantIds.size <= 10) {
+                    // query already excluded them
+                    all
+                } else {
+                    // manually filter out the large list
+                    all.filter { user -> user.userId !in participantIds }
+                }
+                trySend(filtered).isSuccess
+            }
+        }
+
+        awaitClose { registration.remove() }
+    }
+
+
+
 }
