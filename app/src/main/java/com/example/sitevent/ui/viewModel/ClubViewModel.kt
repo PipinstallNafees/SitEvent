@@ -60,9 +60,9 @@ class ClubViewModel @Inject constructor(
     private val _operationStatus = MutableSharedFlow<Resource<Unit>>(replay = 0)
     val operationStatus: SharedFlow<Resource<Unit>> = _operationStatus.asSharedFlow()
 
-    fun createClub(club: Club) = viewModelScope.launch {
+    fun createClub(club: Club,clubUser: ClubUser) = viewModelScope.launch {
         _operationStatus.emit(Resource.Loading)
-        _operationStatus.emit(createClubUseCase(club))
+        _operationStatus.emit(createClubUseCase(club, clubUser))
     }
 
 

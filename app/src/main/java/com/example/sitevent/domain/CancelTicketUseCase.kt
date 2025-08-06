@@ -3,11 +3,13 @@ package com.example.sitevent.domain
 import com.example.sitevent.data.Resource
 import com.example.sitevent.data.repository.Inteface.EventRepository
 import com.example.sitevent.data.repository.Inteface.TicketRepository
+import com.example.sitevent.data.repository.Inteface.UserRepository
 import javax.inject.Inject
 
 class CancelTicketUseCase @Inject constructor(
     private val ticketRepository: TicketRepository,
     private val eventRepository: EventRepository,
+    private val userRepository: UserRepository,
 ) {
 
     suspend operator fun invoke(
@@ -16,24 +18,38 @@ class CancelTicketUseCase @Inject constructor(
         eventId: String,
         ticketId: String,
         teamId: String,
+        userId: String,
         participantIds: List<String>,
     ): Resource<Unit> {
-        when (val result = ticketRepository.cancelTicket(ticketId)) {
-            is Resource.Error -> return result
-            is Resource.Success -> {
-                eventRepository.cancelTicketInEvent(
-                    categoryId,
-                    clubId,
-                    eventId,
-                    ticketId,
-                    teamId,
-                    participantIds
-                )
-                return result
-            }
 
-            else -> {}
+        val ticketRes = ticketRepository.cancelTicket(ticketId)
+        if(ticketRes is Resource.Error){
+            return ticketRes
         }
-        return Resource.Error(Exception("Unknown error"))
+
+        val eventRes = eventRepository.cancelTicketInEvent(
+            categoryId = categoryId,
+            clubId     = clubId,
+            eventId    = eventId,
+            ticketId   = ticketId,
+            teamId     = teamId,
+            participantIds = participantIds
+        )
+
+        if(eventRes is Resource.Error){
+            return eventRes
+        }
+
+        val userRes = userRepository.cancelTicketForUser(
+            userId = userId,
+            ticketId = ticketId
+        )
+
+        if(userRes is Resource.Error){
+            return userRes
+        }
+
+        return Resource.Success(Unit)
+
     }
 }

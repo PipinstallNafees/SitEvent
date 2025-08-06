@@ -148,5 +148,19 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun cancelTicketForUser(userId: String, ticketId: String): Resource<Unit> {
+        return try {
+            firebaseFirestore
+                .collection("Users")
+                .document(userId)
+                .update("tickets", FieldValue.arrayRemove(ticketId))
+                .await()
+            Resource.Success(Unit)
+        } catch (e:Exception) {
+            Resource.Error(e)
+        }
+
+    }
+
 
 }

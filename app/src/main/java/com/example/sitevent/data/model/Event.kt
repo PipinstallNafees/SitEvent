@@ -5,9 +5,10 @@ import com.google.firebase.Timestamp
 enum class EventRole { ADMIN, OC, MOD, PARTICIPANT,COORDINATOR,SPEAKER }
 
 data class EventOrganizer(
-    val userId: String,
-    val role: EventRole,
+    val userId: String = "",
+    val role: EventRole = EventRole.COORDINATOR,
     val assignedAt: Long = System.currentTimeMillis(),
+    val eventName: String = "",
 )
 
 // 1) New enum to describe your event’s participation mode
@@ -55,11 +56,11 @@ data class Event(
     val teamsIds: List<String> = emptyList(),
     val participantsIds: List<String> = emptyList(),
 
-    val isOnline: Boolean = false,
-    val registrationRequired: Boolean = false,
+    var isOnline: Boolean = false,
+    var registrationRequired: Boolean = false,
 
     val eventResults: List<String> = emptyList(),
-    val haveSubEvent: Boolean = false,
+    var haveSubEvent: Boolean = false,
     val subEventIds: List<String> = emptyList(),
     val additionalInfo: List<AdditionalInfo> = emptyList(),
     val additionalInfoAskFromUser: List<AdditionalInfoAskFromUser> = emptyList(),
@@ -72,7 +73,7 @@ data class AdditionalInfo(
 data class AdditionalInfoAskFromUser(
     val key: String = "",
     val value: String = "",
-    val required: Boolean = false,
+    var required: Boolean = false,
 )
 
 data class EventResult(

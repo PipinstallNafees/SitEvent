@@ -29,14 +29,26 @@ class ClubRepositoryImpl @Inject constructor(
             .collection(CLUBS)
 
 
-    override suspend fun createClub(club: Club): Resource<Unit> = try {
+    override suspend fun createClub(club: Club, clubUsr: ClubUser): Resource<Unit> = try {
 
-        firebaseFirestore.collection(CATEGORIES)
+        val batch = firebaseFirestore.batch()
+
+        val clubUsrRef = firebaseFirestore
+            .collection(CATEGORIES)
             .document(club.categoryId)
             .collection(CLUBS)
             .document(club.clubId)
-            .set(club)
-            .await()
+            .collection(MEMBERS)
+            .document(clubUsr.userId)
+
+        val clubRef = firebaseFirestore.collection(CATEGORIES)
+            .document(club.categoryId)
+            .collection(CLUBS)
+            .document(club.clubId)
+
+        batch.set(clubUsrRef, clubUsr)
+        batch.set(clubRef, club)
+        batch.commit().await()
 
         Resource.Success(Unit)
     } catch (e: Exception) {

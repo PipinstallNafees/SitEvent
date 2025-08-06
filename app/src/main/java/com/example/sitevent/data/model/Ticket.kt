@@ -27,7 +27,9 @@ data class Ticket(
 data class Team(
     val teamId: String = System.currentTimeMillis().toString(),
     val eventId: String = "",
+    val eventName:String = "",
     val subEventId: String? = null,
+    val subEventName: String? = null,
     val clubId: String = "",
     val categoryId: String = "",
     val teamName: String = "",

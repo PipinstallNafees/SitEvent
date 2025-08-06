@@ -21,7 +21,7 @@ interface UserRepository {
 
 
     suspend fun issueTicketForUser(userId: String, categoryId: String, clubId: String, eventId: String,ticketId:String): Resource<Unit>
-
+    suspend fun cancelTicketForUser(userId: String,ticketId: String): Resource<Unit>
 //    fun observeClubsForUser(userId: String): Flow<List<UserInClub>>
 
 //    suspend fun searchUsers(query: String): Resource<List<User>>
