@@ -35,11 +35,15 @@ import com.example.sitevent.ui.screen.Club.ClubDetailScreen
 import com.example.sitevent.ui.screen.Club.ClubSettingScreen
 import com.example.sitevent.ui.screen.Club.CreateClubScreen
 import com.example.sitevent.ui.screen.Club.EditClubDetailScreen
+import com.example.sitevent.ui.screen.Club.Event.AllTeamsForEventScreen
 import com.example.sitevent.ui.screen.Club.Event.CreateEventScreen
 import com.example.sitevent.ui.screen.Club.Event.EventDetailScreen
 import com.example.sitevent.ui.screen.Club.Event.EventRegistrationScreen
+import com.example.sitevent.ui.screen.Club.Event.EventSettingScreen
+import com.example.sitevent.ui.screen.Club.Event.TeamDetailedScreen
 import com.example.sitevent.ui.screen.Club.ManageClubRolesScreen
 import com.example.sitevent.ui.screen.ClubCategory.AllCategoryScreen
+import com.example.sitevent.ui.screen.ClubCategory.ClubCategorySettingScreen
 import com.example.sitevent.ui.screen.ClubCategory.CreateCategoryScreen
 import com.example.sitevent.ui.screen.ClubCategory.SingleCategoryScreen
 import com.example.sitevent.ui.screen.HomeScreen
@@ -58,10 +62,15 @@ enum class Screen {
     CREATE_CATEGORY_SCREEN,
     ALL_CATEGORY_SCREEN,
     SINGLE_CATEGORY_SCREEN,
+    CATEGORY_SETTING_SCREEN,
 
     CREATE_EVENT_SCREEN,
     EVENT_DETAIL_SCREEN,
     EVENT_REGISTRATION_SCREEN,
+    EVENT_SETTING_SCREEN,
+    ALL_TEAMS_FOR_EVENT,
+    TEAM_DETAIL_SCREEN,
+
     //bottom bar
     HOME,
     All_CLUBS_SCREEN,
@@ -93,6 +102,9 @@ sealed class NavigationItem(val route: String) {
     object SingleCategory : NavigationItem("${Screen.SINGLE_CATEGORY_SCREEN.name}/{categoryId}") {
         fun createRoute(categoryId: String) = "${Screen.SINGLE_CATEGORY_SCREEN.name}/$categoryId"
     }
+    object CategorySetting : NavigationItem("${Screen.CATEGORY_SETTING_SCREEN.name}/{categoryId}") {
+        fun createRoute(categoryId: String) = "${Screen.CATEGORY_SETTING_SCREEN.name}/$categoryId"
+    }
 
 
     object CreateClub : NavigationItem("${Screen.CREATE_CLUB_SCREEN.name}/{categoryId}") {
@@ -117,6 +129,24 @@ sealed class NavigationItem(val route: String) {
     {
         fun createRoute(categoryId: String, clubId: String, eventId: String) =
             "${Screen.EVENT_REGISTRATION_SCREEN.name}/$categoryId/$clubId/$eventId"
+    }
+
+    object EventSetting : NavigationItem("${Screen.EVENT_SETTING_SCREEN.name}/{categoryId}/{clubId}/{eventId}")
+    {
+        fun createRoute(categoryId: String, clubId: String, eventId: String) =
+            "${Screen.EVENT_SETTING_SCREEN.name}/$categoryId/$clubId/$eventId"
+    }
+
+    object AllTeamsForEvent : NavigationItem("${Screen.ALL_TEAMS_FOR_EVENT.name}/{categoryId}/{clubId}/{eventId}")
+    {
+        fun createRoute(categoryId: String, clubId: String, eventId: String) =
+            "${Screen.ALL_TEAMS_FOR_EVENT.name}/$categoryId/$clubId/$eventId"
+    }
+
+    object TeamDetail : NavigationItem("${Screen.TEAM_DETAIL_SCREEN.name}/{ticketId}/{teamId}")
+    {
+        fun createRoute(ticketId: String,teamId: String) =
+            "${Screen.TEAM_DETAIL_SCREEN.name}/$ticketId/$teamId"
     }
 
 
@@ -221,6 +251,17 @@ fun AppNavigation(
                 navController,
             )
         }
+
+        composable(
+            route = NavigationItem.CategorySetting.route,
+            arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
+        ) {
+            val categoryId = it.arguments?.getString("categoryId") ?: ""
+            ClubCategorySettingScreen(
+                navController = navController,
+                categoryId = categoryId
+            )
+        }
         composable(
             route = NavigationItem.SingleCategory.route,
             arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
@@ -239,6 +280,7 @@ fun AppNavigation(
             val categoryId = it.arguments?.getString("categoryId") ?: ""
             CreateClubScreen(
                 categoryId = categoryId,
+                userId = userId,
                 navController = navController
             )
         }
@@ -330,7 +372,8 @@ fun AppNavigation(
             CreateEventScreen(
                 navController = navController,
                 categoryId = categoryId,
-                clubId = clubId
+                clubId = clubId,
+                userId = userId
             )
         }
 
@@ -373,6 +416,65 @@ fun AppNavigation(
                 eventId = eventId,
                 userId = userId
             )
+        }
+
+        composable(
+            route = NavigationItem.EventSetting.route,
+            arguments = listOf(
+                navArgument("categoryId") { type = NavType.StringType },
+                navArgument("clubId") { type = NavType.StringType },
+                navArgument("eventId") { type = NavType.StringType }
+            )
+        ) {
+            val args = it.arguments!!
+            val categoryId = args.getString("categoryId") ?: ""
+            val clubId = args.getString("clubId") ?: ""
+            val eventId = args.getString("eventId") ?: ""
+            EventSettingScreen(
+                navController = navController,
+                categoryId = categoryId,
+                clubId = clubId,
+                eventId = eventId
+            )
+        }
+
+        composable(
+            route = NavigationItem.AllTeamsForEvent.route,
+            arguments = listOf(
+                navArgument("categoryId") { type = NavType.StringType },
+                navArgument("clubId") { type = NavType.StringType },
+                navArgument("eventId") { type = NavType.StringType }
+            )
+        ){
+            val args = it.arguments!!
+            val categoryId = args.getString("categoryId") ?: ""
+            val clubId = args.getString("clubId") ?: ""
+            val eventId = args.getString("eventId") ?: ""
+
+            AllTeamsForEventScreen(
+                navController = navController,
+                categoryId = categoryId,
+                clubId = clubId,
+                eventId = eventId
+            )
+        }
+
+        composable(
+            route = NavigationItem.TeamDetail.route,
+            arguments = listOf(
+                navArgument("ticketId") { type = NavType.StringType },
+                navArgument("teamId") { type = NavType.StringType }
+            )
+        ) {
+            val ticketId = it.arguments?.getString("ticketId") ?: ""
+            val teamId = it.arguments?.getString("teamId") ?: ""
+
+            TeamDetailedScreen(
+                ticketId = ticketId,
+                teamId= teamId,
+                navController = navController
+            )
+
         }
         composable(NavigationItem.Chats.route) {
             ChatScreen(navController)

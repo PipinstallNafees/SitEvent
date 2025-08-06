@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -13,9 +14,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.GridOff
+import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -91,12 +97,20 @@ fun SingleCategoryScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showSmallCards = !showSmallCards }) {
-                        Icon(
-                            imageVector = if (showSmallCards) Icons.Default.LockOpen else Icons.Default.Lock,
-                            contentDescription = "Toggle View"
-                        )
+                    Row {
+                        IconButton(onClick = { showSmallCards = !showSmallCards }) {
+                            Icon(
+                                imageVector = if (showSmallCards) Icons.Default.GridOn else Icons.AutoMirrored.Filled.List,
+                                contentDescription = "Toggle View"
+                            )
+                        }
+                        IconButton(onClick = {
+                            navController.navigate(NavigationItem.CategorySetting.createRoute(categoryId))
+                        }) {
+                            Icon(Icons.Default.Settings, contentDescription = null)
+                        }
                     }
+
                 },
 
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -2,6 +2,7 @@
 package com.example.sitevent.ui.screen.Club.Event
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -39,13 +40,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -141,6 +146,13 @@ fun EventDetailScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },
+                actions = {
+                    IconButton(onClick = {
+                        navController.navigate(NavigationItem.EventSetting.createRoute(categoryId,clubId,eventId))
+                    }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Event Setting")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
@@ -172,8 +184,12 @@ fun EventDetailScreen(
                     description = event!!.description
                 )
                 RegistrationSection(
-
+                    categoryId,
+                    clubId,
                     event!!,
+                    userId,
+                    navController,
+                    ticketViewModel,
                     onRegister = {
                         navController.navigate(NavigationItem.EventRegistration.createRoute(categoryId,clubId,eventId))
                     }
@@ -182,8 +198,14 @@ fun EventDetailScreen(
                 AdditionalInfoSection(event!!.additionalInfo)
                 OrganizersSection(event!!.organizers)
 //                SponsorsSection(event!!)
-                TeamsSection(teams)
-                TicketsSection(tickets)
+                TeamsSection(teams){
+                    navController.navigate(NavigationItem.AllTeamsForEvent.createRoute(
+                        categoryId,
+                        clubId,
+                        eventId
+                    ))
+                }
+                TicketsSection(tickets,navController)
 //                SubEventsSection(event!!, navController, categoryId, clubId, eventId)
 //                ResultsSection(event!!)
             }
@@ -321,17 +343,45 @@ fun AboutSection(
 }
 
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationSection(
+    categoryId: String,
+    clubId: String,
     event: Event,
-    onRegister: () -> Unit = {},
+    userId: String,
+    navController: NavController,
+    ticketViewModel: TicketViewModel,
+    onRegister: () -> Unit = {}
 ) {
     // Formatters
     val timeFormatter = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
     val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
-    val endDate = remember(event) { event.registrationEndTime!!.toDate() }
+
+    // Ensure registration end time safe
+    val endDate = remember(event) { event.registrationEndTime?.toDate() }
+    if (endDate == null) return
     val formattedDate = remember(endDate) { dateFormatter.format(endDate) }
     val formattedTime = remember(endDate) { timeFormatter.format(endDate) }
+
+    val registered = remember(event.participantsIds, userId) {
+        event.participantsIds.contains(userId)
+    }
+
+    // Trigger ticket load only when registered
+    LaunchedEffect(registered) {
+        if (registered) {
+            ticketViewModel.getTicketForUserInEvent(event.eventId, userId)
+        }
+    }
+
+    // Collect ticket state
+    val ticket by ticketViewModel.ticket.collectAsStateWithLifecycle()
+
+    // Derive team info from ticket whenever it updates
+    val teamId = remember(ticket) { ticket?.teamId.orEmpty() }
+    val teamMemberIds = remember(ticket) { ticket?.participantIds ?: emptyList() }
 
     // Countdown state
     var remainingMillis by remember { mutableStateOf(endDate.time - System.currentTimeMillis()) }
@@ -348,23 +398,12 @@ fun RegistrationSection(
     val minutes = (remainingMillis / (1000 * 60) % 60).coerceAtLeast(0)
     val seconds = (remainingMillis / 1000 % 60).coerceAtLeast(0)
 
-    // Animated background gradient
-    val infiniteTransition = rememberInfiniteTransition()
-    val animatedColor by infiniteTransition.animateColor(
-        initialValue = MaterialTheme.colorScheme.primaryContainer,
-        targetValue = MaterialTheme.colorScheme.secondaryContainer,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clip(RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = animatedColor),
+            .clip(MaterialTheme.shapes.medium),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -374,7 +413,7 @@ fun RegistrationSection(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Registration Ends",
+                    text = "Registration Ends $formattedDate at $formattedTime",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -391,48 +430,87 @@ fun RegistrationSection(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
                     .padding(vertical = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = String.format(
                         Locale.getDefault(),
-                        "%02dd  %02dh  %02dm  %02ds",
-                        days,
-                        hours,
-                        minutes,
-                        seconds
+                        "%02dd %02dh %02dm %02ds",
+                        days, hours, minutes, seconds
                     ),
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onRegister,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.EventAvailable,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Register Now",
-                    style = MaterialTheme.typography.labelLarge
-                )
+            if (registered) {
+                // Log once when ticket arrives
+                LaunchedEffect(ticket) {
+                    Log.d("RegistrationSection", "Loaded Ticket: $ticket")
+                    Log.d("RegistrationSection", "teamId: $teamId, members: $teamMemberIds")
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            ticket?.ticketId?.let { tid ->
+                                navController.navigate(NavigationItem.UserTicketDetail.createRoute(userId,tid))
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Icon(Icons.Default.ConfirmationNumber, null, Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Show Ticket", style = MaterialTheme.typography.labelLarge)
+                    }
+
+                    Button(
+                        onClick = {
+                            ticketViewModel.cancelTicket(
+                                categoryId,
+                                clubId,
+                                event.eventId,
+                                ticket!!.ticketId,
+                                teamId,
+                                userId,
+                                teamMemberIds
+                            )
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        shape = MaterialTheme.shapes.small,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                    ) {
+                        Icon(Icons.Default.Cancel, null, Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Cancel Ticket", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            } else {
+                Button(
+                    onClick = onRegister,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Icon(Icons.Default.EventAvailable, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Register Now", style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     }
@@ -650,104 +728,116 @@ private fun OrganizerChip(org: EventOrganizer) {
 @Composable
 fun TeamsSection(
     teams: List<Team>,
-    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     val uniqueTeams = teams.groupBy { it.teamId }.values.map { it.first() }
 
-    Column(modifier = modifier.fillMaxWidth().padding(8.dp)) {
-        SectionTitle("Teams (${uniqueTeams.size} Registered)")
+    Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Teams (${uniqueTeams.size} Registered)",style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "See all",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .clickable {onClick()}
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            )
+
+        }
 
         Spacer(Modifier.height(12.dp))
 
-//        LazyColumn(
-//            verticalArrangement = Arrangement.spacedBy(12.dp),
-//            contentPadding = PaddingValues(bottom = 16.dp)
-//        ) {
-//            items(uniqueTeams) { team ->
-//                TeamCard(team)
-//            }
-//        }
         teams.forEach { team ->
-            TeamCard(team)
+            Log.d("TeamsSection", "Team: ${team.teamId}")
+            TeamCard(team,{})
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TeamCard(team: Team) {
-
-    val accentColors = listOf(
+fun TeamCard(
+    team: Team,
+    onClick: () -> Unit = {}
+) {
+    // Generate a gradient accent based on teamId hash
+    val colors = listOf(
         MaterialTheme.colorScheme.primary,
         MaterialTheme.colorScheme.secondary,
-        MaterialTheme.colorScheme.tertiary,
-        MaterialTheme.colorScheme.error
+        MaterialTheme.colorScheme.tertiary
     )
-    val accent = accentColors[abs(team.teamId.hashCode()) % accentColors.size]
+    val accent = colors[abs(team.teamId.hashCode()) % colors.size]
+    val gradient = Brush.horizontalGradient(listOf(accent, accent.copy(alpha = 0.6f)))
 
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
             .padding(8.dp)
     ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             // Accent stripe
             Box(
                 modifier = Modifier
-                    .width(6.dp)
-                    .fillMaxHeight()
-                    .background(accent)
+                    .width(4.dp)
+                    .height(64.dp)
+                    .background(gradient)
             )
+            Spacer(modifier = Modifier.width(12.dp))
 
-            Spacer(Modifier.width(12.dp))
-
-            // Content
-            Column(
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .padding(vertical = 12.dp)
-                    .weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = team.teamName.ifBlank { "Team ${team.teamId.takeLast(4)}" },
+                    text = "Team: ${team.teamName}",
                     style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = team.eventName,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
-                Spacer(Modifier.height(4.dp))
-
-                Text(
-                    text = "${team.teamMemberIds.size} member${if (team.teamMemberIds.size == 1) "" else "s"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            }
-
-            // Leader avatar
-            Card(
-                shape = CircleShape,
-                colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.2f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier
-                    .size(44.dp)
-                    .align(Alignment.CenterVertically)
-                    .padding(end = 12.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
                     Text(
-                        text = team.teamLeaderId.take(2).uppercase(),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = accent
+                        text = team.teamLeaderId,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+
+            // Members count avatar
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(accent.copy(alpha = 0.2f))
+            ) {
+                Text(
+                    text = team.teamMemberIds.size.toString(),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = accent
+                )
             }
         }
     }
@@ -795,6 +885,7 @@ private fun TeamCard(team: Team) {
 @Composable
 fun TicketsSection(
     tickets: List<Ticket>,
+    navController: NavController,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -910,57 +1001,6 @@ private fun TicketCard(ticket: Ticket) {
 // extension to title-case words
 private fun String.capitalizeWords() = split(' ')
     .joinToString(" ") { it.replaceFirstChar(Char::titlecase) }
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun PreviewTicketsSection() {
-    // Sample status enum for preview
-
-
-    // Sample tickets
-    val sampleTickets = listOf(
-        Ticket(
-            ticketId = "TCKT1001",
-            userId = "alice01",
-            issuedAt = System.currentTimeMillis() - 86400000L, // 1 day ago
-            qrCodeUrl = "https://example.com/qr1.png",
-            status = RegistrationStatus.CONFIRMED
-        ),
-        Ticket(
-            ticketId = "TCKT1002",
-            userId = "bob99",
-            issuedAt = System.currentTimeMillis() - 43200000L, // 12 hours ago
-            qrCodeUrl = null,
-            status = RegistrationStatus.PENDING
-        ),
-        Ticket(
-            ticketId = "TCKT1003",
-            userId = "carolX",
-            issuedAt = System.currentTimeMillis() - 600000L, // 10 minutes ago
-            qrCodeUrl = "https://example.com/qr3.png",
-            status = RegistrationStatus.CLAIMED
-        ),
-        Ticket(
-            ticketId = "TCKT1004",
-            userId = "dave88",
-            issuedAt = System.currentTimeMillis() - 172800000L, // 2 days ago
-            qrCodeUrl = null,
-            status = RegistrationStatus.CANCELLED
-        )
-    )
-
-    // Wrap in your app theme (replace MyAppTheme with your actual theme)
-    SitEventTheme {
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            TicketsSection(tickets = sampleTickets)
-        }
-    }
-}
 
 
 //@Composable

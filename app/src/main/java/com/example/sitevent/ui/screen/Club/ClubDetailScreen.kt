@@ -34,7 +34,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,7 +61,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.ClubRole
 import com.example.sitevent.data.model.Event
 import com.example.sitevent.ui.Navigation.NavigationItem
@@ -85,7 +83,7 @@ fun ClubDetailScreen(
     userId: String,
     clubViewModel: ClubViewModel = hiltViewModel(),
     eventViewModel: EventViewModel = hiltViewModel(),
-    userViewModel: UserViewModel = hiltViewModel()
+    userViewModel: UserViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     Log.d("ClubDetailScreen", "userId: $userId")
@@ -120,7 +118,9 @@ fun ClubDetailScreen(
             ) {
                 IconButton(
                     onClick = { navController.popBackStack() },
-                    modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(16.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -129,8 +129,17 @@ fun ClubDetailScreen(
                     )
                 }
                 IconButton(
-                    onClick = { navController.navigate(NavigationItem.ClubSetting.createRoute(categoryId, clubId)) },
-                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
+                    onClick = {
+                        navController.navigate(
+                            NavigationItem.ClubSetting.createRoute(
+                                categoryId,
+                                clubId
+                            )
+                        )
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Settings,
@@ -149,35 +158,64 @@ fun ClubDetailScreen(
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
                     // Avatar initials
                     Box(
-                        modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary),
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondary),
                         contentAlignment = Alignment.Center
                     ) {
                         val initials = club?.name
                             ?.split(" ")
                             ?.mapNotNull { it.firstOrNull()?.toString() }
                             ?.joinToString("") ?: ""
-                        Text(initials, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
+                        Text(
+                            initials,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondary
+                        )
                     }
                     Spacer(Modifier.height(8.dp))
 
-                    Text(text = club?.name ?: "Loading...", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = club?.name ?: "Loading...",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(Modifier.height(4.dp))
-                    Text(text = club?.description ?: "", style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+                    Text(
+                        text = club?.description ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 3
+                    )
                     Spacer(Modifier.height(12.dp))
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.Group, contentDescription = null)
                             Spacer(Modifier.width(4.dp))
-                            Text("Members: ${club?.members?.size ?: 0}", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                "Members: ${club?.members?.size ?: 0}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.CalendarToday, contentDescription = null)
                             Spacer(Modifier.width(4.dp))
-                            Text("Events: ${club?.events?.size ?: 0}", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                "Events: ${club?.events?.size ?: 0}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
                     Spacer(Modifier.height(16.dp))
@@ -185,23 +223,50 @@ fun ClubDetailScreen(
                     // Join/Leave Button
                     Button(
                         onClick = {
-                            if (isPublic) {
-                                if (joined) clubViewModel.leaveClub(categoryId, clubId, userId)
-                                else clubViewModel.joinClub(categoryId, clubId, userId)
-                            } else {
-                                Toast.makeText(context, "Club is private, you can't join or leave", Toast.LENGTH_SHORT).show()
+                            when {
+                                isAdmin -> {
+                                    Toast.makeText(
+                                        context,
+                                        "You are the admin—you cannot leave this club.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+
+                                isPublic -> {
+                                    if (joined) {
+                                        clubViewModel.leaveClub(categoryId, clubId, userId)
+                                    } else {
+                                        clubViewModel.joinClub(categoryId, clubId, userId)
+                                    }
+                                }
+
+                                else -> {
+                                    Toast.makeText(
+                                        context,
+                                        "This club is private. You cannot join or leave.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (joined) "Leave Club" else "Join Club")
+                        Text(text = if (joined) "Leave Club" else "Join Club")
                     }
+
 
                     Spacer(Modifier.height(8.dp))
 
                     if (isAdmin) {
                         OutlinedButton(
-                            onClick = { navController.navigate(NavigationItem.CreateEvent.createRoute(categoryId, clubId)) },
+                            onClick = {
+                                navController.navigate(
+                                    NavigationItem.CreateEvent.createRoute(
+                                        categoryId,
+                                        clubId
+                                    )
+                                )
+                            },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Create Event")
@@ -213,28 +278,43 @@ fun ClubDetailScreen(
             // Tabs and event listing
             var selectedTab by remember { mutableIntStateOf(0) }
             val tabs = listOf("Upcoming", "Past")
-            TabRow(selectedTabIndex = selectedTab, containerColor = MaterialTheme.colorScheme.background) {
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = MaterialTheme.colorScheme.background
+            ) {
                 tabs.forEachIndexed { index, title ->
-                    Tab(selected = selectedTab == index, onClick = { selectedTab = index }, text = { Text(title) })
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = { Text(title) })
                 }
             }
 
 
-                    val events = eventsByClubId
-                    val now = Instant.now()
-                    val filtered = if (selectedTab == 0) {
-                        events.filter { it.startTime?.toDate()?.toInstant()?.isAfter(now) == true }
-                    } else {
-                        events.filter { it.endTime?.toDate()?.toInstant()?.isBefore(now) == true }
+            val events = eventsByClubId
+            val now = Instant.now()
+            val filtered = if (selectedTab == 0) {
+                events.filter { it.startTime?.toDate()?.toInstant()?.isAfter(now) == true }
+            } else {
+                events.filter { it.endTime?.toDate()?.toInstant()?.isBefore(now) == true }
+            }
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (filtered.isEmpty()) Text(
+                    "No ${tabs[selectedTab].lowercase()} events",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                else filtered.forEach { event ->
+                    EventCard(event = event) {
+                        navController.navigate(
+                            NavigationItem.EventDetail.createRoute(
+                                categoryId,
+                                clubId,
+                                event.eventId
+                            )
+                        )
                     }
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (filtered.isEmpty()) Text("No ${tabs[selectedTab].lowercase()} events", style = MaterialTheme.typography.bodyMedium)
-                        else filtered.forEach { event ->
-                            EventCard(event = event) {
-                                navController.navigate(NavigationItem.EventDetail.createRoute(categoryId, clubId, event.eventId))
-                            }
-                        }
-                    }
+                }
+            }
 
 
         }
@@ -247,7 +327,7 @@ fun EventCard(
     event: Event,
     isRegistered: Boolean = false,
     onRegisterClick: () -> Unit = {},
-    onDetailsClick: () -> Unit = {}
+    onDetailsClick: () -> Unit = {},
 ) {
     val zoned = event.startTime?.toDate()?.toInstant()?.atZone(ZoneId.systemDefault())
     val dateText = zoned?.let {
@@ -267,31 +347,67 @@ fun EventCard(
         Row(Modifier.height(IntrinsicSize.Min)) {
             Box(
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
+                    .background(
+                        MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
+                    )
                     .width(64.dp)
                     .fillMaxHeight()
                     .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(dateText, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), fontSize = 16.sp, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onPrimary)
+                Text(
+                    dateText,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
 
             Spacer(Modifier.width(12.dp))
 
-            Column(modifier = Modifier.padding(vertical = 12.dp).weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = event.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = event.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Filled.AccessTime, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        imageVector = Icons.Filled.AccessTime,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(Modifier.width(4.dp))
-                    Text(text = zoned?.let { DateTimeFormatter.ofPattern("hh:mm a").format(it) }.orEmpty(), style = MaterialTheme.typography.bodySmall)
+                    Text(text = zoned?.let { DateTimeFormatter.ofPattern("hh:mm a").format(it) }
+                        .orEmpty(), style = MaterialTheme.typography.bodySmall)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Filled.LocationOn, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        imageVector = Icons.Filled.LocationOn,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(Modifier.width(4.dp))
                     Text(text = event.venue, style = MaterialTheme.typography.bodySmall)
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onRegisterClick, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = onRegisterClick,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors()
+                    ) {
                         Text(if (isRegistered) "Registered" else "Register")
                     }
                     OutlinedButton(onClick = onDetailsClick, modifier = Modifier.weight(1f)) {

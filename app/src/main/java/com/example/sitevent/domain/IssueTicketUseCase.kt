@@ -29,8 +29,11 @@ class IssueTicketUseCase @Inject constructor(
             eventId    = ticket.eventId,
             ticketId   = ticket.ticketId,
             teamId     = ticket.teamId,
-            participantIds = ticket.participantIds
+            participantIds = team.teamMemberIds
         )
+        Log.d("IssueTicket", "step2 ${ticket}")
+        Log.d("IssueTicket", "step2 ${team.teamMemberIds}")
+
         if (eventRes is Resource.Error) {
             Log.e("IssueTicket", "step2 failed", eventRes.exception)
             return eventRes

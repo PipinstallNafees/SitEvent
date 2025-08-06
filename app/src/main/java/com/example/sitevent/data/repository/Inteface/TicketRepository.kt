@@ -26,4 +26,5 @@ interface TicketRepository {
     fun getAllTeamsForEvent(categoryId: String, clubId: String, eventId: String): Flow<List<Team>>
     fun getAllMembersNotRegistered(categoryId: String, clubId: String, eventId: String,participantIds: List<String>): Flow<List<User>>
 
+    fun getTicketForUserInEvent(eventId: String, userId: String): Flow<Ticket?>
 }

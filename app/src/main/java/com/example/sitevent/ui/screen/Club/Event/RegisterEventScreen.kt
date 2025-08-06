@@ -64,10 +64,16 @@ fun EventRegistrationScreen(
     ticketViewModel: TicketViewModel = hiltViewModel(),
 ) {
     // 1) Load event
+    val event by eventViewModel.event.collectAsStateWithLifecycle()
+
+
     LaunchedEffect(eventId) {
         eventViewModel.getEvent(categoryId, clubId, eventId)
     }
-    val event by eventViewModel.event.collectAsStateWithLifecycle()
+
+    val eventName = remember(event) {
+        event?.title.orEmpty()
+    }
     val actionStatus by ticketViewModel.actionStatus.collectAsStateWithLifecycle(null)
 
     // 2) Local UI state
@@ -185,23 +191,28 @@ fun EventRegistrationScreen(
         // Submit button
         Button(
             onClick = {
+                val id = System.currentTimeMillis().toString()
                 val team = Team(
+                    teamId = id,
                     teamName = teamName,
                     teamMemberIds = memberIds.filter { it.isNotBlank() },
                     teamLeaderId = userId,
                     eventId = eventId,
                     clubId = clubId,
-                    categoryId = categoryId
+                    categoryId = categoryId,
+                    eventName = eventName,
                 )
                 val ticket = Ticket(
+                    ticketId = id,
                     categoryId = categoryId,
                     clubId = clubId,
                     eventId = eventId,
                     userId = userId,
-                    teamId = if (participation == "Group") team.teamId else "",
+                    teamId = id,
                     additionalInfoAskByEventOrganizer = event?.additionalInfoAskFromUser
-                        ?: emptyList()
-                )
+                        ?: emptyList(),
+                    participantIds = memberIds.filter { it.isNotBlank() },
+                    )
                 ticketViewModel.issueTicket(ticket, team)
             },
             modifier = Modifier

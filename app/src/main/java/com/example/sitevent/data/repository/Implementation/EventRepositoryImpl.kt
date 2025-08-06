@@ -1,5 +1,6 @@
 package com.example.sitevent.data.repository.Implementation
 
+import android.util.Log
 import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.Event
 import com.example.sitevent.data.repository.Inteface.EventRepository
@@ -112,7 +113,7 @@ class EventRepositoryImpl @Inject constructor(
         eventId: String,
         ticketId: String,
         teamId: String,
-        participantIds: List<String>
+        participantIds: List<String>,
     ): Resource<Unit> {
         return try {
             val batch = firebaseFirestore.batch()
@@ -130,6 +131,8 @@ class EventRepositoryImpl @Inject constructor(
                 "teamIds",
                 FieldValue.arrayUnion(teamId)
             )
+
+            Log.d("EventRepository", "Participant IDs: $participantIds")
             // append ALL participant IDs at once
             batch.update(
                 eventRef,
@@ -190,6 +193,9 @@ class EventRepositoryImpl @Inject constructor(
             val batch = firebaseFirestore.batch()
             val eventRef = eventsCollection(categoryId, clubId).document(eventId)
 
+            Log.d("EventRepository","teamIds: $teamId")
+            Log.d("EventRepository","ticketIds: $ticketId")
+
             batch.update(eventRef, "ticketIds", FieldValue.arrayRemove(ticketId))
             batch.update(eventRef, "teamIds", FieldValue.arrayRemove(teamId))
             batch.update(
@@ -197,6 +203,7 @@ class EventRepositoryImpl @Inject constructor(
                 "participantsIds",
                 FieldValue.arrayRemove(*participantIds.toTypedArray())
             )
+
 
             batch.commit().await()
             Resource.Success(Unit)

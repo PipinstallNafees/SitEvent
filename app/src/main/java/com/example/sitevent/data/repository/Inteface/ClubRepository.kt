@@ -6,7 +6,7 @@ import com.example.sitevent.data.model.ClubUser
 import kotlinx.coroutines.flow.Flow
 
 interface ClubRepository {
-    suspend fun createClub(club: Club): Resource<Unit>
+    suspend fun createClub(club: Club,clubUsr: ClubUser): Resource<Unit>
     suspend fun updateClub(club: Club): Resource<Unit>
     suspend fun deleteClub(categoryId: String, clubId: String): Resource<Unit>
 

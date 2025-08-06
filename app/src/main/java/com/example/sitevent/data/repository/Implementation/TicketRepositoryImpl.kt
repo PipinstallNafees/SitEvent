@@ -1,5 +1,6 @@
 package com.example.sitevent.data.repository.Implementation
 
+import android.util.Log
 import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.RegistrationStatus
 import com.example.sitevent.data.model.Team
@@ -94,15 +95,22 @@ class TicketRepositoryImpl @Inject constructor(
     override suspend fun cancelTicket(ticketId: String): Resource<Unit> = try {
 
 
-      firestore
+        Log.d("TicketRepository", "Cancelling ticket with ID: $ticketId")
+        val batch = firestore.batch()
+      val ticketRef = firestore
             .collection(TICKETS)
             .document(ticketId)
-            .update(
-                mapOf(
-                    "status" to RegistrationStatus.CANCELLED
-                )
-            )
-            .await()
+
+
+        val teamRef = firestore
+            .collection(TICKETS)
+            .document(ticketId)
+            .collection(TEAMS)
+            .document(ticketId)
+
+        batch.delete(ticketRef)
+        batch.delete(teamRef)
+        batch.commit().await()
 
         Resource.Success(Unit)
     } catch (e: Exception) {
@@ -233,7 +241,7 @@ class TicketRepositoryImpl @Inject constructor(
         eventId: String
     ): Flow<List<Team>> = callbackFlow{
         val registration: ListenerRegistration = firestore
-            .collection(TICKETS)
+            .collectionGroup(TEAMS)
             .whereEqualTo("eventId",eventId)
             .addSnapshotListener { snap, err ->
                 if (err != null) {
@@ -285,6 +293,21 @@ class TicketRepositoryImpl @Inject constructor(
             }
         }
 
+        awaitClose { registration.remove() }
+    }
+
+    override fun getTicketForUserInEvent(eventId: String, userId: String): Flow<Ticket?> = callbackFlow {
+        val registration: ListenerRegistration = firestore
+            .collection(TICKETS)
+            .whereEqualTo("userId",userId)
+            .whereEqualTo("eventId",eventId)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    close(err)
+                    return@addSnapshotListener
+                }
+                snap?.let { trySend(it.toObjects(Ticket::class.java).firstOrNull()).isSuccess }
+            }
         awaitClose { registration.remove() }
     }
 

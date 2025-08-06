@@ -93,6 +93,7 @@ class TicketViewModel @Inject constructor(
         eventId: String,
         ticketId: String,
         teamId: String,
+        userId: String,
         participantIds: List<String>,
     ) = viewModelScope.launch {
         _actionStatus.emit(Resource.Loading)
@@ -102,6 +103,7 @@ class TicketViewModel @Inject constructor(
             eventId,
             ticketId,
             teamId,
+            userId,
             participantIds
         )
         _actionStatus.emit(res)
@@ -148,6 +150,14 @@ class TicketViewModel @Inject constructor(
     fun getMembersNotRegistered(categoryId: String, clubId: String, eventId: String,participantIds: List<String>) = viewModelScope.launch {
         repo.getAllMembersNotRegistered(categoryId, clubId, eventId,participantIds).collect { list ->
             _membersNotRegistered.value = list
+        }
+    }
+
+
+
+    fun getTicketForUserInEvent(eventId: String, userId: String) = viewModelScope.launch {
+        repo.getTicketForUserInEvent(eventId, userId).collect { ticket ->
+            _ticket.value = ticket
         }
     }
 }
