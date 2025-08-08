@@ -48,9 +48,10 @@ It serves as a unified digital platform to streamline operations for college clu
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/akmaurya7/SitEvent.git
+   
    ```
 2. **Open the project in Android Studio.**
-3. **Make your own google-service.json file by creating a project in firebase to run the app**
+3. **Make your own ``` google-service.json ``` file by creating a project in firebase to run the app**
 4. **Connect the app to Firebase**  
    Follow the official [Firebase setup guide](https://firebase.google.com/docs/android/setup).
 5. **Build and run the app** on an emulator or a physical Android device.
