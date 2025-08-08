@@ -39,9 +39,10 @@ It serves as a unified digital platform to streamline operations for college clu
    
    ```
 2. **Open the project in Android Studio.**
-3. **Connect the app to Firebase**  
+3. **Make your own json file by creating a project in firebase to run the app**
+4. **Connect the app to Firebase**  
    Follow the official [Firebase setup guide](https://firebase.google.com/docs/android/setup).
-4. **Build and run the app** on an emulator or a physical Android device.
+5. **Build and run the app** on an emulator or a physical Android device.
 
 ---
 
