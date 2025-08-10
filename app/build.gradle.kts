@@ -65,6 +65,7 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:2.51.1")
     ksp("com.google.dagger:hilt-compiler:2.51.1")
+
     // Hilt Navigation for Compose
     implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
 
@@ -93,10 +94,10 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-messaging")
 
-    //datasotore
+    //datastore
     implementation("androidx.datastore:datastore-preferences:1.1.7")
 
-    //spslasscreen
+    //splashscreen
     implementation("androidx.core:core-splashscreen:1.0.1")
 
     //coil

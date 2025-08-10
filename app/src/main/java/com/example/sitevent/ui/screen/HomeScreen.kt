@@ -559,3 +559,4 @@ fun OrganizerCard(initials: String, id: String) {
         )
     }
 }
+

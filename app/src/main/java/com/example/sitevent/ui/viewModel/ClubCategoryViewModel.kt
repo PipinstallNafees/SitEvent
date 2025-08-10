@@ -40,7 +40,7 @@ class ClubCategoryViewModel @Inject constructor(
 
     private val _operationStatus = MutableSharedFlow<Resource<Unit>>(replay = 0)
     val operationStatus: SharedFlow<Resource<Unit>> = _operationStatus.asSharedFlow()
-    // i use shared flow because when there will save , update, or delete then sharedflow notify the ui once that
+    // i use shared flow because when there will save , update, or delete then shared flow notify the ui once that
     // i am completed and then we can update the ui
 
     fun saveCategory(category: Category) = viewModelScope.launch {
