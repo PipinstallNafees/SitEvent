@@ -26,13 +26,20 @@ import androidx.navigation.NavController
 import com.example.sitevent.data.Resource
 import com.example.sitevent.ui.Navigation.NavigationItem
 import com.example.sitevent.ui.viewModel.AuthViewModel
+import com.example.sitevent.data.ThemePreferenceManager
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
     navController: NavController,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    var theme by remember { mutableStateOf("Light") }
+    val context = LocalContext.current
+    val themePreferenceManager = remember { ThemePreferenceManager(context) }
+    val theme by themePreferenceManager.themeFlow.collectAsState(initial = "System")
+    val coroutineScope = rememberCoroutineScope()
     var notificationsEnabled by remember { mutableStateOf(true) }
 
     val signOutState by authViewModel.signoutState.collectAsState()
@@ -113,7 +120,11 @@ fun ProfileScreen(
                     listOf("Light", "Dark", "System").forEach { option ->
                         val selected = theme == option
                         TextButton(
-                            onClick = { theme = option },
+                            onClick = {
+                                coroutineScope.launch {
+                                    themePreferenceManager.setTheme(option)
+                                }
+                            },
                             colors = ButtonDefaults.textButtonColors(
                                 contentColor = if (selected)
                                     MaterialTheme.colorScheme.primary
@@ -176,7 +187,10 @@ fun ProfileScreen(
             Spacer(Modifier.height(24.dp))
 
             // DANGER ZONE
-            SectionHeader("Danger Zone", color = MaterialTheme.colorScheme.error)
+            SectionHeader(
+                text = "Danger Zone",
+                color = MaterialTheme.colorScheme.error
+            )
             SectionCard(
                 borderColor = MaterialTheme.colorScheme.error,
                 contentColor = MaterialTheme.colorScheme.error

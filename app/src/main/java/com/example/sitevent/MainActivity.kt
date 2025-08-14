@@ -12,6 +12,12 @@ import com.example.sitevent.ui.Navigation.AppNavigation
 import com.example.sitevent.ui.theme.SitEventTheme
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.sitevent.data.ThemePreferenceManager
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.runBlocking
 
 
 @AndroidEntryPoint
@@ -35,7 +41,14 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SitEventTheme {
+            val themePreferenceManager = ThemePreferenceManager(this)
+            val themePref by themePreferenceManager.themeFlow.collectAsState(initial = "System")
+            val darkTheme = when (themePref) {
+                "Light" -> false
+                "Dark" -> true
+                else -> isSystemInDarkTheme()
+            }
+            SitEventTheme(darkTheme = darkTheme) {
                 AppNavigation()
 //                AddScheduleScreen()
 
@@ -46,4 +59,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
