@@ -5,6 +5,18 @@ It serves as a unified digital platform to streamline operations for college clu
 
 ---
 
+## 📸 Screenshots
+
+<div align="center">
+  <img src="screenshots/home_screen.png" width="250" alt="Home Screen"/>
+  <img src="screenshots/event_list.png" width="250" alt="Event List"/>
+  <img src="screenshots/event_details.png" width="250" alt="Event Details"/>
+</div>
+
+*Screenshots showing the main interface of Event Hive*
+
+---
+
 ## 🚀 Features
 
 - 📆 **Event Management**: Create, host, and manage club events.
@@ -35,13 +47,14 @@ It serves as a unified digital platform to streamline operations for college clu
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/akmaurya7/event-hive.git
+   git clone https://github.com/akmaurya7/SitEvent.git
    
    ```
 2. **Open the project in Android Studio.**
-3. **Connect the app to Firebase**  
+3. **Make your own ``` google-service.json ``` file by creating a project in firebase to run the app**
+4. **Connect the app to Firebase**  
    Follow the official [Firebase setup guide](https://firebase.google.com/docs/android/setup).
-4. **Build and run the app** on an emulator or a physical Android device.
+5. **Build and run the app** on an emulator or a physical Android device.
 
 ---
 

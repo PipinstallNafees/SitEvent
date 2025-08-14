@@ -1,7 +1,11 @@
 package com.example.sitevent.data.repository.Implementation
 
+import android.util.Log
 import com.example.sitevent.data.Resource
+import com.example.sitevent.data.model.RegistrationStatus
+import com.example.sitevent.data.model.Team
 import com.example.sitevent.data.model.Ticket
+import com.example.sitevent.data.model.User
 import com.example.sitevent.data.repository.Inteface.TicketRepository
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -21,6 +25,7 @@ class TicketRepositoryImpl @Inject constructor(
     private val CATEGORIES = "Categories"
     private val CLUBS = "Clubs"
     private val EVENTS = "Events"
+    private val TEAMS = "Teams"
 
 
     private val ticketsRoot = firestore.collection("Tickets")
@@ -36,78 +41,76 @@ class TicketRepositoryImpl @Inject constructor(
         .collection(EVENTS)
 
 
-    override suspend fun issueTicket(ticket: Ticket): Resource<Unit> = try {
-        //save in user's collection
-        userCollection()
-            .document(ticket.userId)
+    override suspend fun issueTicket(ticket: Ticket,team: Team): Resource<Unit> = try {
+
+        val batch = firestore.batch()
+
+        val ticketRef = firestore
             .collection(TICKETS)
             .document(ticket.ticketId)
-            .set(ticket)
-            .await()
 
-        //save in event's  collection
-        eventCollection(ticket.categoryId, ticket.clubId)
-            .document(ticket.eventId)
+
+        //save team collection
+        val teamRef = firestore
             .collection(TICKETS)
             .document(ticket.ticketId)
-            .set(ticket)
-            .await()
+            .collection(TEAMS)
+            .document(team.teamId)
 
-        //save ticket id in event details
-        eventCollection(ticket.categoryId, ticket.clubId)
-            .document(ticket.eventId)
-            .update("ticketIds", FieldValue.arrayUnion(ticket.ticketId))
-            .await()
+        batch.set(ticketRef, ticket)
+        batch.set(teamRef, team)
+
+        batch.commit().await()
 
         Resource.Success(Unit)
     } catch (e: Exception) {
         Resource.Error(e)
     }
 
-    override suspend fun updateTicket(ticket: Ticket): Resource<Unit> = try {
-        //update in user's collection
-        userCollection()
-            .document(ticket.userId)
-            .collection(TICKETS)
-            .document(ticket.ticketId)
-            .set(ticket)
-            .await()
+    override suspend fun updateTicket(ticket: Ticket,team: Team): Resource<Unit> = try {
 
-        //update in event's  collection
-        eventCollection(ticket.categoryId, ticket.clubId)
-            .document(ticket.eventId)
+        val batch = firestore.batch()
+        //update in team collection
+        val teamRef = firestore
             .collection(TICKETS)
             .document(ticket.ticketId)
-            .set(ticket)
-            .await()
+            .collection(TEAMS)
+            .document(team.teamId)
+
+
+        val ticketRef = firestore
+            .collection(TICKETS)
+            .document(ticket.ticketId)
+
+        batch.set(teamRef, team)
+        batch.set(ticketRef, ticket)
+
+        batch.commit().await()
 
         Resource.Success(Unit)
     } catch (e: Exception) {
         Resource.Error(e)
     }
 
-    override suspend fun deleteTicket(ticket: Ticket): Resource<Unit> = try {
-        //delete in user's collection
-        userCollection()
-            .document(ticket.userId)
-            .collection(TICKETS)
-            .document(ticket.ticketId)
-            .delete()
-            .await()
+    override suspend fun cancelTicket(ticketId: String): Resource<Unit> = try {
 
-        //delete in event's  collection
-        eventCollection(ticket.categoryId, ticket.clubId)
-            .document(ticket.eventId)
-            .collection(TICKETS)
-            .document(ticket.ticketId)
-            .delete()
-            .await()
 
-        //delete from event details
-        eventCollection(ticket.categoryId, ticket.clubId)
-            .document(ticket.eventId)
-            .update("ticketIds", FieldValue.arrayRemove(ticket.ticketId))
-            .await()
+        Log.d("TicketRepository", "Cancelling ticket with ID: $ticketId")
+        val batch = firestore.batch()
+      val ticketRef = firestore
+            .collection(TICKETS)
+            .document(ticketId)
+
+
+        val teamRef = firestore
+            .collection(TICKETS)
+            .document(ticketId)
+            .collection(TEAMS)
+            .document(ticketId)
+
+        batch.delete(ticketRef)
+        batch.delete(teamRef)
+        batch.commit().await()
 
         Resource.Success(Unit)
     } catch (e: Exception) {
@@ -122,31 +125,18 @@ class TicketRepositoryImpl @Inject constructor(
         userId: String
     ): Resource<Unit> = try {
 
-        //update in events ticket
-        eventCollection(categoryId, clubId)
-            .document(eventId)
+       firestore
             .collection(TICKETS)
             .document(ticketId)
             .update(
                 mapOf(
                     "isValid" to false,
-                    "redeemedAt" to FieldValue.serverTimestamp()
+                    "redeemedAt" to FieldValue.serverTimestamp(),
+                    "status" to RegistrationStatus.CLAIMED
                 )
             )
             .await()
 
-        //update in user ticket
-        firestore.collection(USER)
-            .document(userId)
-            .collection(TICKETS)
-            .document(ticketId)
-            .update(
-                mapOf(
-                    "isValid" to false,
-                    "redeemedAt" to FieldValue.serverTimestamp()
-                )
-            )
-            .await()
 
         Resource.Success(Unit)
     } catch (e: Exception) {
@@ -154,8 +144,7 @@ class TicketRepositoryImpl @Inject constructor(
     }
 
     override fun getTicket(categoryId: String, clubId: String, eventId: String, ticketId: String): Flow<Ticket?> = callbackFlow {
-        val registration: ListenerRegistration = eventCollection(categoryId, clubId)
-            .document(eventId)
+        val registration: ListenerRegistration = firestore
             .collection(TICKETS)
             .document(ticketId)
             .addSnapshotListener { snap, err ->
@@ -170,9 +159,9 @@ class TicketRepositoryImpl @Inject constructor(
 
 
     override fun getAllTicketsForEvent(categoryId: String, clubId: String, eventId: String): Flow<List<Ticket>> = callbackFlow {
-        val registration: ListenerRegistration = eventCollection(categoryId, clubId)
-            .document(eventId)
+        val registration: ListenerRegistration = firestore
             .collection(TICKETS)
+            .whereEqualTo("eventId",eventId)
             .addSnapshotListener { snap, err ->
                 if (err != null) {
                     close(err)
@@ -185,7 +174,7 @@ class TicketRepositoryImpl @Inject constructor(
     }
 
     override fun getAllTickets(): Flow<List<Ticket>> = callbackFlow {
-        val registration: ListenerRegistration = ticketsRoot
+        val registration: ListenerRegistration = firestore.collection(TICKETS)
             .addSnapshotListener { snap, err ->
                 if (err != null) {
                     close(err)
@@ -198,9 +187,9 @@ class TicketRepositoryImpl @Inject constructor(
 
     override fun getAllTicketsForUser(userId: String): Flow<List<Ticket>> = callbackFlow {
 
-        val registration: ListenerRegistration = userCollection()
-            .document(userId)
+        val registration: ListenerRegistration = firestore
             .collection(TICKETS)
+            .whereEqualTo("userId",userId)
             .addSnapshotListener { snap, err ->
                 if (err != null) {
                     close(err)
@@ -213,8 +202,7 @@ class TicketRepositoryImpl @Inject constructor(
     }
 
     override fun getSingleTicketForUser(userId: String, ticketId: String): Flow<Ticket?> = callbackFlow {
-        val registration: ListenerRegistration = userCollection()
-            .document(userId)
+        val registration: ListenerRegistration = firestore
             .collection(TICKETS)
             .document(ticketId)
             .addSnapshotListener { snap, err ->
@@ -226,4 +214,103 @@ class TicketRepositoryImpl @Inject constructor(
             }
         awaitClose { registration.remove() }
     }
+
+    override fun getTeamForTicket(
+        ticketId: String,
+        teamId: String
+    ): Flow<Team?> = callbackFlow {
+        val registration: ListenerRegistration = firestore
+            .collection(TICKETS)
+            .document(ticketId)
+            .collection(TEAMS)
+            .document(teamId)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    close(err)
+                    return@addSnapshotListener
+                }
+                snap?.let { trySend(it.toObject(Team::class.java)).isSuccess }
+            }
+        awaitClose { registration.remove() }
+
+    }
+
+    override fun getAllTeamsForEvent(
+        categoryId: String,
+        clubId: String,
+        eventId: String
+    ): Flow<List<Team>> = callbackFlow{
+        val registration: ListenerRegistration = firestore
+            .collectionGroup(TEAMS)
+            .whereEqualTo("eventId",eventId)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    close(err)
+                    return@addSnapshotListener
+                }
+                snap?.let { trySend(it.toObjects(Team::class.java)).isSuccess }
+            }
+        awaitClose { registration.remove() }
+    }
+
+    override fun getAllMembersNotRegistered(
+        categoryId: String,
+        clubId:     String,
+        eventId:    String,
+        participantIds: List<String>
+    ): Flow<List<User>> = callbackFlow {
+        val query = when {
+            participantIds.isEmpty() -> {
+                // no filter → get everyone
+                firestore.collection(USER)
+            }
+            participantIds.size <= 10 -> {
+                // safe to use whereNotIn
+                firestore.collection(USER)
+                    .whereNotIn("userId", participantIds)
+            }
+            else -> {
+                // too many IDs for whereNotIn: fetch all, filter in code below
+                firestore.collection(USER)
+            }
+        }
+
+        val registration = query.addSnapshotListener { snap, err ->
+            if (err != null) {
+                close(err)
+                return@addSnapshotListener
+            }
+            snap?.let {
+                val all = it.toObjects(User::class.java)
+                val filtered = if (participantIds.size <= 10) {
+                    // query already excluded them
+                    all
+                } else {
+                    // manually filter out the large list
+                    all.filter { user -> user.userId !in participantIds }
+                }
+                trySend(filtered).isSuccess
+            }
+        }
+
+        awaitClose { registration.remove() }
+    }
+
+    override fun getTicketForUserInEvent(eventId: String, userId: String): Flow<Ticket?> = callbackFlow {
+        val registration: ListenerRegistration = firestore
+            .collection(TICKETS)
+            .whereEqualTo("userId",userId)
+            .whereEqualTo("eventId",eventId)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    close(err)
+                    return@addSnapshotListener
+                }
+                snap?.let { trySend(it.toObjects(Ticket::class.java).firstOrNull()).isSuccess }
+            }
+        awaitClose { registration.remove() }
+    }
+
+
+
 }

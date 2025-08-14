@@ -28,6 +28,8 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.Club
+import com.example.sitevent.data.model.ClubRole
+import com.example.sitevent.data.model.ClubUser
 import com.example.sitevent.ui.viewModel.ClubViewModel
 import com.example.sitevent.ui.viewModel.UserViewModel
 
@@ -35,6 +37,7 @@ import com.example.sitevent.ui.viewModel.UserViewModel
 @Composable
 fun CreateClubScreen(
     categoryId: String,
+    userId: String,
     navController: NavController,
     clubViewModel: ClubViewModel = hiltViewModel(),
     userViewModel: UserViewModel = hiltViewModel()
@@ -58,8 +61,6 @@ fun CreateClubScreen(
         bannerUri = uri
     }
 
-    val currentUser by userViewModel.observeUser.collectAsState()
-    val userId = (currentUser as? Resource.Success)?.data?.userId
 
     // Operation result
     val operationStatus by clubViewModel.operationStatus.collectAsStateWithLifecycle(null)
@@ -204,8 +205,17 @@ fun CreateClubScreen(
                     Text("Cancel")
                 }
                 Button(
+
                     onClick = {
+                        val id = System.currentTimeMillis().toString()
+                        val clubUser = ClubUser(
+                            clubId =  id,
+                            categoryId = categoryId,
+                            userId = userId,
+                           role = ClubRole.ADMIN
+                        )
                         val club = Club(
+                            clubId = id,
                             name = clubName,
                             categoryId = categoryId,
                             description = description,
@@ -213,7 +223,7 @@ fun CreateClubScreen(
                             bannerUrl = bannerUri?.toString(),
                             isPublic = isPublic,
                         )
-                        clubViewModel.createClub(club)
+                        clubViewModel.createClub(club,clubUser)
                     },
                     enabled = clubName.isNotBlank() && operationStatus !is Resource.Loading,
                     modifier = Modifier.weight(1f)

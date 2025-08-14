@@ -7,7 +7,16 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,9 +26,32 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +65,8 @@ import com.example.sitevent.data.Resource
 import com.example.sitevent.data.model.AdditionalInfo
 import com.example.sitevent.data.model.Event
 import com.example.sitevent.data.model.EventMode
+import com.example.sitevent.data.model.EventOrganizer
+import com.example.sitevent.data.model.EventRole
 import com.example.sitevent.ui.viewModel.EventViewModel
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
@@ -40,6 +74,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
+
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +83,7 @@ fun CreateEventScreen(
     navController: NavController,
     categoryId: String,
     clubId: String,
+    userId: String,
     viewModel: EventViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -91,6 +128,7 @@ fun CreateEventScreen(
             initial.year, initial.monthValue - 1, initial.dayOfMonth
         ).show()
     }
+
     fun pickTime(initial: LocalTime, onTime: (LocalTime) -> Unit) {
         TimePickerDialog(
             context,
@@ -109,6 +147,7 @@ fun CreateEventScreen(
             is Resource.Error -> scope.launch {
                 snackbarHost.showSnackbar((opStatus as Resource.Error).toString())
             }
+
             else -> Unit
         }
     }
@@ -118,7 +157,7 @@ fun CreateEventScreen(
             TopAppBar(
                 title = { Text("New Event") },
                 navigationIcon = {
-                    IconButton(onClick =  { navController.popBackStack() })
+                    IconButton(onClick = { navController.popBackStack() })
                     { Icon(Icons.Default.Edit, contentDescription = "Back") }
                 }
             )
@@ -131,7 +170,7 @@ fun CreateEventScreen(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton (onClick =  { navController.popBackStack() } ){ Text("Cancel") }
+                TextButton(onClick = { navController.popBackStack() }) { Text("Cancel") }
                 Button(
                     onClick = {
                         // helper to convert date+time to Timestamp?
@@ -139,6 +178,10 @@ fun CreateEventScreen(
                             d?.atTime(t ?: LocalTime.MIDNIGHT)
                                 ?.atZone(ZoneId.systemDefault())
                                 ?.toInstant()?.let { Timestamp(it) }
+                        val organizer = EventOrganizer(
+                            userId = userId,
+                            role = EventRole.ADMIN
+                        )
 
                         viewModel.createEvent(
                             Event(
@@ -153,16 +196,18 @@ fun CreateEventScreen(
                                 posterUrl = posterUri?.toString(),
                                 venue = if (isOnline) "Online" else venue,
                                 registrationStartTime = toTs(regStartDate, regStartTime),
-                                registrationEndTime   = toTs(regEndDate,   regEndTime),
-                                startTime             = toTs(eventStartDate, eventStartTime),
-                                endTime               = toTs(eventEndDate,   eventEndTime),
+                                registrationEndTime = toTs(regEndDate, regEndTime),
+                                startTime = toTs(eventStartDate, eventStartTime),
+                                endTime = toTs(eventEndDate, eventEndTime),
                                 mode = mode,
                                 minTeamSize = minTeam.toIntOrNull() ?: 1,
                                 maxTeamSize = maxTeam.toIntOrNull() ?: 1,
                                 isOnline = isOnline,
                                 registrationRequired = registrationRequired,
                                 haveSubEvent = haveSubEvents,
-                                additionalInfoDuringRegistration = extraInfo
+                                additionalInfo = extraInfo,
+                                organizers = listOf(organizer),
+
                             )
                         )
                     },
@@ -214,6 +259,12 @@ fun CreateEventScreen(
                             .verticalScroll(rememberScrollState())
                     )
                     OutlinedTextField(
+                        value = venue,
+                        onValueChange = { venue = it },
+                        label = { Text("Venue") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
                         value = prizePool,
                         onValueChange = { prizePool = it },
                         label = { Text("Prize Pool") },
@@ -260,11 +311,11 @@ fun CreateEventScreen(
                 ) {
                     Text("Settings", style = MaterialTheme.typography.titleMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        EventMode.values().forEach { m ->
+                        EventMode.entries.forEach { m ->
                             FilterChip(
                                 selected = mode == m,
                                 onClick = { mode = m },
-                                label = { Text(m.name.capitalize()) }
+                                label = { Text(m.name.capitalize(Locale.ROOT)) }
                             )
                         }
                     }
@@ -290,7 +341,9 @@ fun CreateEventScreen(
                         Text("Online Event")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Switch(checked = registrationRequired, onCheckedChange = { registrationRequired = it })
+                        Switch(
+                            checked = registrationRequired,
+                            onCheckedChange = { registrationRequired = it })
                         Spacer(Modifier.width(8.dp))
                         Text("Registration Required")
                     }
@@ -309,8 +362,16 @@ fun CreateEventScreen(
                 startTime = regStartTime,
                 endDate = regEndDate,
                 endTime = regEndTime,
-                onPickStartDate = { pickDate(regStartDate ?: LocalDate.now()) { regStartDate = it } },
-                onPickStartTime = { pickTime(regStartTime ?: LocalTime.now()) { regStartTime = it } },
+                onPickStartDate = {
+                    pickDate(regStartDate ?: LocalDate.now()) {
+                        regStartDate = it
+                    }
+                },
+                onPickStartTime = {
+                    pickTime(regStartTime ?: LocalTime.now()) {
+                        regStartTime = it
+                    }
+                },
                 onPickEndDate = { pickDate(regEndDate ?: LocalDate.now()) { regEndDate = it } },
                 onPickEndTime = { pickTime(regEndTime ?: LocalTime.now()) { regEndTime = it } }
             )
@@ -321,8 +382,16 @@ fun CreateEventScreen(
                 startTime = eventStartTime,
                 endDate = eventEndDate,
                 endTime = eventEndTime,
-                onPickStartDate = { pickDate(eventStartDate ?: LocalDate.now()) { eventStartDate = it } },
-                onPickStartTime = { pickTime(eventStartTime ?: LocalTime.now()) { eventStartTime = it } },
+                onPickStartDate = {
+                    pickDate(eventStartDate ?: LocalDate.now()) {
+                        eventStartDate = it
+                    }
+                },
+                onPickStartTime = {
+                    pickTime(eventStartTime ?: LocalTime.now()) {
+                        eventStartTime = it
+                    }
+                },
                 onPickEndDate = { pickDate(eventEndDate ?: LocalDate.now()) { eventEndDate = it } },
                 onPickEndTime = { pickTime(eventEndTime ?: LocalTime.now()) { eventEndTime = it } }
             )

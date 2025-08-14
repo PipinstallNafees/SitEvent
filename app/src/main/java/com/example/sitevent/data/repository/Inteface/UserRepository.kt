@@ -14,11 +14,14 @@ interface UserRepository {
     fun observeAllUsers(): Flow<List<User>>
     fun observeUser(userId: String): Flow<User?>
     fun observeCurrentUser(): Flow<User?>
+
+
     suspend fun joinClubForUser(userId: String, categoryId: String, clubId: String): Resource<Unit>
     suspend fun leaveClubForUser(userId: String, categoryId: String, clubId: String): Resource<Unit>
-    suspend fun issueTicketForUser(userId: String, categoryId: String, clubId: String, eventId: String): Resource<Unit>
 
 
+    suspend fun issueTicketForUser(userId: String, categoryId: String, clubId: String, eventId: String,ticketId:String): Resource<Unit>
+    suspend fun cancelTicketForUser(userId: String,ticketId: String): Resource<Unit>
 //    fun observeClubsForUser(userId: String): Flow<List<UserInClub>>
 
 //    suspend fun searchUsers(query: String): Resource<List<User>>
