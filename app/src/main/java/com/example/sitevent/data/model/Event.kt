@@ -2,11 +2,11 @@ package com.example.sitevent.data.model
 
 import com.google.firebase.Timestamp
 
-enum class EventRole { ADMIN, OC, MOD, PARTICIPANT }
+enum class EventRole { ADMIN, OC, MOD, PARTICIPANT,COORDINATOR,SPEAKER }
 
 data class EventOrganizer(
-    val userId: String,
-    val role: EventRole,
+    val userId: String ="",
+    val role: EventRole = EventRole.COORDINATOR,
     val assignedAt: Long = System.currentTimeMillis(),
 )
 
