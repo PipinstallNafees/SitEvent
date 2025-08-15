@@ -1,5 +1,6 @@
 package com.example.sitevent.ui.screen.User
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +27,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.sitevent.data.Resource
 import com.example.sitevent.ui.viewModel.TicketViewModel
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.common.BitMatrix
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -76,17 +81,16 @@ fun UserTicketDetailedScreen(
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(ticket!!.qrCodeUrl.orEmpty())
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(200.dp)
-                            .clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop
-                    )
+                    // Generate QR code from ticket details
+                    val qrData = "TicketID: ${ticket!!.ticketId}, EventID: ${ticket!!.eventId}, Category: ${ticket!!.categoryId}"
+                    val qrBitmap = generateQrCodeBitmap(qrData)
+                    qrBitmap?.let {
+                        androidx.compose.foundation.Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = "QR Code",
+                            modifier = Modifier.size(200.dp).clip(RoundedCornerShape(8.dp))
+                        )
+                    }
                     InfoRow("Ticket ID", ticket!!.ticketId)
                     InfoRow("Category", ticket!!.categoryId)
                     InfoRow("Issued At", formatTimestamp(ticket!!.issuedAt))
@@ -94,7 +98,6 @@ fun UserTicketDetailedScreen(
                     ticket!!.redeemedAt?.let {
                         InfoRow("Redeemed At", formatTimestamp(it.seconds * 1000))
                     }
-
                     Button(
                         onClick = {},
                         modifier = Modifier.fillMaxWidth()
@@ -102,8 +105,6 @@ fun UserTicketDetailedScreen(
                         Text(if (ticket!!.isValid) "Share Ticket" else "Invalid Ticket")
                     }
                 }
-
-
             }
         }
     }
@@ -123,4 +124,19 @@ fun InfoRow(label: String, value: String) {
 fun formatTimestamp(timeInMillis: Long): String {
     val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
     return sdf.format(Date(timeInMillis))
+}
+
+fun generateQrCodeBitmap(data: String, size: Int = 512): Bitmap? {
+    return try {
+        val bitMatrix: BitMatrix = MultiFormatWriter().encode(data, BarcodeFormat.QR_CODE, size, size)
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
+        for (x in 0 until size) {
+            for (y in 0 until size) {
+                bmp.setPixel(x, y, if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+            }
+        }
+        bmp
+    } catch (e: Exception) {
+        null
+    }
 }

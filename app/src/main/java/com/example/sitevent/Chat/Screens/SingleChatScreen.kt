@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -119,7 +120,7 @@ fun ChatHeader(name: String, imagerUrl: String, onBackClicked: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            Icons.Rounded.ArrowBack,
+            Icons.AutoMirrored.Rounded.ArrowBack,
             contentDescription = null,
             modifier = Modifier
                 .clickable { onBackClicked.invoke() }
