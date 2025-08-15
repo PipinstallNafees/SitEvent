@@ -47,8 +47,9 @@ import com.example.sitevent.ui.screen.ClubCategory.ClubCategorySettingScreen
 import com.example.sitevent.ui.screen.ClubCategory.CreateCategoryScreen
 import com.example.sitevent.ui.screen.ClubCategory.SingleCategoryScreen
 import com.example.sitevent.ui.screen.HomeScreen
+import com.example.sitevent.settings.PrivacyPolicyScreen
 import com.example.sitevent.ui.screen.ProfileScreen
-import com.example.sitevent.ui.screen.User.UserTicketDetailedScreen
+import com.example.sitevent.settings.UserTicketDetailedScreen
 import com.example.sitevent.ui.screen.User.UserTicketScreen
 import com.example.sitevent.ui.viewModel.AuthViewModel
 import com.example.sitevent.ui.viewModel.UserViewModel
@@ -89,6 +90,8 @@ enum class Screen {
     EDIT_PROFILE_SCREEN,
     USER_TICKET_DETAIL_SCREEN,
 
+    // Privacy Policy
+    PRIVACY_POLICY_SCREEN,
 }
 
 sealed class NavigationItem(val route: String) {
@@ -186,6 +189,8 @@ sealed class NavigationItem(val route: String) {
         fun createRoute(userId: String, ticketId: String) =
             "${Screen.USER_TICKET_DETAIL_SCREEN.name}/$userId/$ticketId"
     }
+
+    object PrivacyPolicy : NavigationItem(Screen.PRIVACY_POLICY_SCREEN.name)
 
 }
 
@@ -513,6 +518,10 @@ fun AppNavigation(
             )
         }
 
+        composable(NavigationItem.PrivacyPolicy.route) {
+            PrivacyPolicyScreen(navController)
+        }
+
     }
 }
 
@@ -579,4 +588,3 @@ data class BottomNavigationItem(
     val icon: ImageVector,
     val route: String,
 )
-

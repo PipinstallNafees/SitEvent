@@ -1,4 +1,4 @@
-package com.example.sitevent.data
+package com.example.sitevent.settings
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
