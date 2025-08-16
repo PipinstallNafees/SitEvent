@@ -46,59 +46,76 @@ fun PrivacyPolicyScreen(navController: NavController) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "Last updated: 15 Aug 2025",
+                text = "Last updated: 16 Aug 2025",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            SectionTitle("Overview")
+            SectionTitle("Who we are")
             Paragraph(
-                "Sit Event (\"we\", \"us\", \"our\") respects your privacy. This policy explains what data we collect, how we use it, how it’s shared, and the choices you have. By using the app, you agree to this policy."
+                "SitEvent (\"we\", \"us\", \"our\") provides event discovery, ticketing, and community features. For privacy questions, contact support@sitevent.example."
             )
 
             SectionTitle("Information we collect")
-            Bullet("Account info: name, email, profile details you provide.")
-            Bullet("Authentication data: identifiers from sign-in providers (e.g., Google).")
-            Bullet("Usage data: app interactions, device info, and diagnostics.")
-            Bullet("Content you submit: messages, tickets, images, and related metadata.")
+            Bullet("Account info you provide (name, email, profile details).")
+            Bullet("Authentication data from sign-in providers (e.g., Google).")
+            Bullet("Content you submit: tickets, chat messages, bug reports (including screenshots), and related metadata.")
+            Bullet("Device and diagnostics: app version, device model, OS version, crash and performance data.")
+            Bullet("Usage data: interactions with screens and features (e.g., tickets, chats).")
+            Bullet("Optional media access when you choose to upload images/screenshots.")
 
             SectionTitle("How we use information")
-            Bullet("Provide and operate app features (accounts, tickets, chat).")
-            Bullet("Security, fraud prevention, and abuse detection.")
-            Bullet("Improve performance, analytics, and user experience.")
-            Bullet("Send important notifications and service updates.")
+            Bullet("Provide core features (accounts, tickets, chat, notifications).")
+            Bullet("Improve and secure the app, including debugging, analytics, and preventing abuse.")
+            Bullet("Communicate important updates and service messages (e.g., reminders, tickets).")
+            Bullet("Comply with legal obligations and enforce terms.")
 
             SectionTitle("Legal bases (EEA/UK)")
             Bullet("Contract: to provide requested services.")
-            Bullet("Legitimate interests: to secure and improve the app.")
+            Bullet("Legitimate interests: to keep services safe and improve them.")
             Bullet("Consent: where required (e.g., certain notifications).")
 
             SectionTitle("Sharing and disclosure")
-            Bullet("Service providers (e.g., hosting, analytics, messaging) under contract.")
+            Bullet("Service providers that help us run the app under contract (confidentiality and security obligations).")
+            Bullet("Firebase services: Authentication, Firestore (database), Storage (media uploads), and Messaging (notifications).")
+            Bullet("Google Sign-In to authenticate your account when you opt to use it.")
             Bullet("When required by law or to protect rights, safety, and security.")
-            Bullet("With your direction or consent (e.g., sharing content).")
+            Bullet("With your direction or consent (for example, content you share).")
 
             SectionTitle("Data retention")
             Paragraph(
-                "We keep data for as long as needed to provide the service and for legitimate business or legal purposes. We delete or anonymize data when no longer required."
+                "We retain personal data for as long as needed to operate features and for legitimate business or legal purposes. " +
+                "Bug reports (and attachments) are kept for troubleshooting and audit; we remove or anonymize them when no longer necessary. " +
+                "You can request deletion of your account as described below."
             )
 
             SectionTitle("Security")
             Paragraph(
-                "We use technical and organizational measures to protect your data. No method of transmission or storage is 100% secure; risks may remain."
+                "We use technical and organizational safeguards to protect your data. No method of transmission or storage is 100% secure; residual risk may remain."
             )
 
             SectionTitle("Children’s privacy")
             Paragraph(
-                "Our app isn’t directed to children under the age where parental consent is required by law. If we learn we collected such data, we’ll take steps to delete it."
+                "The app isn’t directed to children under the age where parental consent is required by law. If we learn we collected such data, we’ll take steps to delete it."
             )
 
-            SectionTitle("Your choices and rights")
-            Bullet("Access, update, or delete your account information.")
-            Bullet("Control notifications in system settings or app preferences.")
-            Bullet("Withdraw consent where processing is based on consent.")
+            SectionTitle("Your rights")
+            Bullet("Access and update your account information.")
+            Bullet("Delete your account or request deletion of certain data, subject to legal limits.")
+            Bullet("Object to or restrict certain processing and withdraw consent where processing is based on consent.")
+            Bullet("Data portability where applicable.")
             Paragraph(
-                "Depending on your region, you may have additional rights (e.g., data portability, objection). Contact us to exercise these rights."
+                "Depending on your region, you may have additional rights. Contact us to exercise these rights."
+            )
+
+            SectionTitle("Notifications")
+            Paragraph(
+                "You can control push notifications in your device’s system settings and within the app’s preferences."
+            )
+
+            SectionTitle("Cookies and similar technologies")
+            Paragraph(
+                "The mobile app doesn’t use web cookies. It may use device identifiers and an FCM token to deliver notifications and improve reliability. You can reset advertising identifiers in your device settings."
             )
 
             SectionTitle("International transfers")
@@ -106,14 +123,19 @@ fun PrivacyPolicyScreen(navController: NavController) {
                 "Your information may be processed in countries other than your own. We take steps to ensure appropriate safeguards are in place."
             )
 
+            SectionTitle("Managing your data")
+            Paragraph(
+                "You can manage or delete your account from Profile → Danger Zone. Deleting your account removes or anonymizes associated data unless we must retain it for legal reasons."
+            )
+
             SectionTitle("Changes to this policy")
             Paragraph(
-                "We may update this policy from time to time. Material changes will be communicated within the app or by other appropriate means."
+                "We may update this policy periodically. Material changes will be communicated within the app or by other appropriate means."
             )
 
             SectionTitle("Contact us")
             Paragraph(
-                "Questions or requests?\n Contact: support@sitevent.example"
+                "Questions or requests? Contact: support@sitevent.example"
             )
         }
     }

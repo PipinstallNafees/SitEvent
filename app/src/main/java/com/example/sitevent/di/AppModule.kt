@@ -19,6 +19,8 @@ import com.example.sitevent.data.repository.Implementation.UserRepositoryImpl
 import com.example.sitevent.data.repository.Inteface.FcmRepository
 import com.example.sitevent.data.repository.Inteface.SubEventRepository
 import com.example.sitevent.data.repository.Inteface.TicketRepository
+import com.example.sitevent.data.repository.Implementation.BugReportRepositoryImpl
+import com.example.sitevent.data.repository.Inteface.BugReportRepository
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -129,6 +131,13 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFcmRepository(api: FcmApi): FcmRepository = FcmRepositoryImpl(api)
+
+    @Provides
+    @Singleton
+    fun provideBugReportRepository(
+        firestore: FirebaseFirestore,
+        storage: FirebaseStorage
+    ): BugReportRepository = BugReportRepositoryImpl(firestore, storage)
 
 
 }
