@@ -63,8 +63,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-compiler:2.51.1")
+
+    implementation("com.google.dagger:hilt-android:2.57")
+    ksp("com.google.dagger:hilt-compiler:2.57")
 
     // Hilt Navigation for Compose
     implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
@@ -107,9 +108,20 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
 
+
     // For ImageBitmap
     implementation("com.google.zxing:core:3.5.3")
     implementation("androidx.compose.ui:ui-graphics:1.5.0") // For ImageBitmap
+
+    //retrofit
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation("com.squareup.okhttp3:okhttp:5.1.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
+
+    // Coroutine support (Kotlinx coroutines)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
 
 
 }

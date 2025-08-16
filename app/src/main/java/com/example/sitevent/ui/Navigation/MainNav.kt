@@ -1,5 +1,6 @@
 package com.example.sitevent.ui.Navigation
 
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
@@ -19,12 +20,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.sitevent.data.Resource
 import com.example.sitevent.ui.screen.Auth.LoginScreen
 import com.example.sitevent.ui.screen.Auth.SignUpScreen
@@ -53,7 +56,6 @@ import com.example.sitevent.settings.UserTicketDetailedScreen
 import com.example.sitevent.ui.screen.User.UserTicketScreen
 import com.example.sitevent.ui.viewModel.AuthViewModel
 import com.example.sitevent.ui.viewModel.UserViewModel
-
 
 enum class Screen {
     LOGIN,
@@ -90,8 +92,10 @@ enum class Screen {
     EDIT_PROFILE_SCREEN,
     USER_TICKET_DETAIL_SCREEN,
 
+
     // Privacy Policy
     PRIVACY_POLICY_SCREEN,
+
 }
 
 sealed class NavigationItem(val route: String) {
@@ -104,80 +108,85 @@ sealed class NavigationItem(val route: String) {
     object AllCategory : NavigationItem(Screen.ALL_CATEGORY_SCREEN.name)
     object SingleCategory : NavigationItem("${Screen.SINGLE_CATEGORY_SCREEN.name}/{categoryId}") {
         fun createRoute(categoryId: String) = "${Screen.SINGLE_CATEGORY_SCREEN.name}/$categoryId"
+        fun createDeepLink(categoryId: String) = "sitevent://app/${createRoute(categoryId)}"
     }
     object CategorySetting : NavigationItem("${Screen.CATEGORY_SETTING_SCREEN.name}/{categoryId}") {
         fun createRoute(categoryId: String) = "${Screen.CATEGORY_SETTING_SCREEN.name}/$categoryId"
+        fun createDeepLink(categoryId: String) = "sitevent://app/${createRoute(categoryId)}"
     }
-
 
     object CreateClub : NavigationItem("${Screen.CREATE_CLUB_SCREEN.name}/{categoryId}") {
         fun createRoute(categoryId: String) = "${Screen.CREATE_CLUB_SCREEN.name}/$categoryId"
+        fun createDeepLink(categoryId: String) = "sitevent://app/${createRoute(categoryId)}"
     }
 
     object CreateEvent :
         NavigationItem("${Screen.CREATE_EVENT_SCREEN.name}/{categoryId}/{clubId}") {
         fun createRoute(categoryId: String, clubId: String) =
             "${Screen.CREATE_EVENT_SCREEN.name}/$categoryId/$clubId"
+        fun createDeepLink(categoryId: String, clubId: String) = "sitevent://app/${createRoute(categoryId, clubId)}"
     }
 
     object EventDetail : NavigationItem(
         route = "${Screen.EVENT_DETAIL_SCREEN.name}/{categoryId}/{clubId}/{eventId}"
     ) {
-        // pass all three into the generated path
         fun createRoute(categoryId: String, clubId: String, eventId: String) =
             "${Screen.EVENT_DETAIL_SCREEN.name}/$categoryId/$clubId/$eventId"
+        fun createDeepLink(categoryId: String, clubId: String, eventId: String) = "sitevent://app/${createRoute(categoryId, clubId, eventId)}"
     }
+
     object EventRegistration :
-        NavigationItem("${Screen.EVENT_REGISTRATION_SCREEN.name}/{categoryId}/{clubId}/{eventId}")
-    {
+        NavigationItem("${Screen.EVENT_REGISTRATION_SCREEN.name}/{categoryId}/{clubId}/{eventId}") {
         fun createRoute(categoryId: String, clubId: String, eventId: String) =
             "${Screen.EVENT_REGISTRATION_SCREEN.name}/$categoryId/$clubId/$eventId"
+        fun createDeepLink(categoryId: String, clubId: String, eventId: String) = "sitevent://app/${createRoute(categoryId, clubId, eventId)}"
     }
 
-    object EventSetting : NavigationItem("${Screen.EVENT_SETTING_SCREEN.name}/{categoryId}/{clubId}/{eventId}")
-    {
+    object EventSetting : NavigationItem("${Screen.EVENT_SETTING_SCREEN.name}/{categoryId}/{clubId}/{eventId}") {
         fun createRoute(categoryId: String, clubId: String, eventId: String) =
             "${Screen.EVENT_SETTING_SCREEN.name}/$categoryId/$clubId/$eventId"
+        fun createDeepLink(categoryId: String, clubId: String, eventId: String) = "sitevent://app/${createRoute(categoryId, clubId, eventId)}"
     }
 
-    object AllTeamsForEvent : NavigationItem("${Screen.ALL_TEAMS_FOR_EVENT.name}/{categoryId}/{clubId}/{eventId}")
-    {
+    object AllTeamsForEvent : NavigationItem("${Screen.ALL_TEAMS_FOR_EVENT.name}/{categoryId}/{clubId}/{eventId}") {
         fun createRoute(categoryId: String, clubId: String, eventId: String) =
             "${Screen.ALL_TEAMS_FOR_EVENT.name}/$categoryId/$clubId/$eventId"
+        fun createDeepLink(categoryId: String, clubId: String, eventId: String) = "sitevent://app/${createRoute(categoryId, clubId, eventId)}"
     }
 
-    object TeamDetail : NavigationItem("${Screen.TEAM_DETAIL_SCREEN.name}/{ticketId}/{teamId}")
-    {
-        fun createRoute(ticketId: String,teamId: String) =
+    object TeamDetail : NavigationItem("${Screen.TEAM_DETAIL_SCREEN.name}/{ticketId}/{teamId}") {
+        fun createRoute(ticketId: String, teamId: String) =
             "${Screen.TEAM_DETAIL_SCREEN.name}/$ticketId/$teamId"
+        fun createDeepLink(ticketId: String, teamId: String) = "sitevent://app/${createRoute(ticketId, teamId)}"
     }
-
 
     object AllClubs : NavigationItem(Screen.All_CLUBS_SCREEN.name)
     object ClubDetail : NavigationItem("${Screen.CLUB_DETAIL_SCREEN.name}/{categoryId}/{clubId}") {
         fun createRoute(categoryId: String, clubId: String) =
             "${Screen.CLUB_DETAIL_SCREEN.name}/$categoryId/$clubId"
+        fun createDeepLink(categoryId: String, clubId: String) = "sitevent://app/${createRoute(categoryId, clubId)}"
     }
 
-    object ClubSetting : NavigationItem("${Screen.CLUB_SETTING_SCREEN.name}/{categoryId}/{clubId}")
-    {
+    object ClubSetting : NavigationItem("${Screen.CLUB_SETTING_SCREEN.name}/{categoryId}/{clubId}") {
         fun createRoute(categoryId: String, clubId: String) =
             "${Screen.CLUB_SETTING_SCREEN.name}/$categoryId/$clubId"
+        fun createDeepLink(categoryId: String, clubId: String) = "sitevent://app/${createRoute(categoryId, clubId)}"
     }
-    object EditClub : NavigationItem("${Screen.EDIT_CLUB_SCREEN.name}/{categoryId}/{clubId}")
-    {
+
+    object EditClub : NavigationItem("${Screen.EDIT_CLUB_SCREEN.name}/{categoryId}/{clubId}") {
         fun createRoute(categoryId: String, clubId: String) =
             "${Screen.EDIT_CLUB_SCREEN.name}/$categoryId/$clubId"
+        fun createDeepLink(categoryId: String, clubId: String) = "sitevent://app/${createRoute(categoryId, clubId)}"
     }
-    object ManageClubRoles : NavigationItem("${Screen.MANAGE_CLUB_ROLES.name}/{categoryId}/{clubId}")
-    {
+
+    object ManageClubRoles : NavigationItem("${Screen.MANAGE_CLUB_ROLES.name}/{categoryId}/{clubId}") {
         fun createRoute(categoryId: String, clubId: String) =
             "${Screen.MANAGE_CLUB_ROLES.name}/$categoryId/$clubId"
+        fun createDeepLink(categoryId: String, clubId: String) = "sitevent://app/${createRoute(categoryId, clubId)}"
     }
 
     object Chats : NavigationItem(Screen.CHATS.name)
     object Profile : NavigationItem(Screen.PROFILE.name)
-
 
     //User
     object UserTicket : NavigationItem(Screen.User_TICKET_SCREEN.name)
@@ -188,114 +197,121 @@ sealed class NavigationItem(val route: String) {
         NavigationItem("${Screen.USER_TICKET_DETAIL_SCREEN.name}/{userId}/{ticketId}") {
         fun createRoute(userId: String, ticketId: String) =
             "${Screen.USER_TICKET_DETAIL_SCREEN.name}/$userId/$ticketId"
+        fun createDeepLink(userId: String, ticketId: String) = "sitevent://app/${createRoute(userId, ticketId)}"
     }
+
 
     object PrivacyPolicy : NavigationItem(Screen.PRIVACY_POLICY_SCREEN.name)
 
-}
 
+}
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun AppNavigation(
+    navController: NavHostController,
     authViewModel: AuthViewModel = hiltViewModel(),
     userViewModel: UserViewModel = hiltViewModel(),
 ) {
-
     val currentUserRes by userViewModel.observeUser.collectAsState()
     val role = when (currentUserRes) {
         is Resource.Loading -> "Loading…"
         is Resource.Error -> "Error"
-        is Resource.Success -> (currentUserRes as Resource.Success).data?.appRole?.toString()
-            ?: "Unknown"
-
+        is Resource.Success -> (currentUserRes as Resource.Success).data?.appRole?.toString() ?: "Unknown"
         else -> "…"
     }
+
     val userId = when (currentUserRes) {
-        is Resource.Loading -> ""
-        is Resource.Error -> ""
         is Resource.Success -> (currentUserRes as Resource.Success).data?.email ?: ""
         else -> ""
     }
 
-    val startDestination = if (authViewModel.signInStatus()) {
-        NavigationItem.Home.route
-    } else {
-        NavigationItem.Login.route
-    }
-
-    val navController = rememberNavController()
+    val startDestination = if (authViewModel.signInStatus()) NavigationItem.Home.route
+    else NavigationItem.Login.route
 
     NavHost(navController, startDestination = startDestination) {
-        composable(NavigationItem.Login.route) {
+        // Auth Screens
+        composable(
+            route = NavigationItem.Login.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.LOGIN.name}" })
+        ) {
             LoginScreen(navController)
         }
-        composable(NavigationItem.SignUp.route) {
-            SignUpScreen(
-                navController
-            )
-        }
-        composable(NavigationItem.Verify.route) {
-            VerifyEmailScreen(
-                navController
-            )
+
+        composable(
+            route = NavigationItem.SignUp.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.SIGNUP.name}" })
+        ) {
+            SignUpScreen(navController)
         }
 
-        //Bottom bar
-        composable(NavigationItem.Home.route) {
+        composable(
+            route = NavigationItem.Verify.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.VERIFY.name}" })
+        ) {
+            VerifyEmailScreen(navController)
+        }
+
+        // Bottom bar screens
+        composable(
+            route = NavigationItem.Home.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.HOME.name}" })
+        ) {
             HomeScreen(navController)
         }
 
-        composable(NavigationItem.CreateCategory.route) {
-            CreateCategoryScreen(
-                navController
-            )
+        composable(
+            route = NavigationItem.CreateCategory.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.CREATE_CATEGORY_SCREEN.name}" })
+        ) {
+            CreateCategoryScreen(navController)
         }
-        composable(NavigationItem.AllCategory.route) {
-            AllCategoryScreen(
-                navController,
-            )
+
+        composable(
+            route = NavigationItem.AllCategory.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.ALL_CATEGORY_SCREEN.name}" })
+        ) {
+            AllCategoryScreen(navController)
         }
 
         composable(
             route = NavigationItem.CategorySetting.route,
-            arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
+            arguments = listOf(navArgument("categoryId") { type = NavType.StringType }),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.CATEGORY_SETTING_SCREEN.name}/{categoryId}"
+            })
         ) {
             val categoryId = it.arguments?.getString("categoryId") ?: ""
-            ClubCategorySettingScreen(
-                navController = navController,
-                categoryId = categoryId
-            )
+            ClubCategorySettingScreen(navController = navController, categoryId = categoryId)
         }
+
         composable(
             route = NavigationItem.SingleCategory.route,
-            arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
+            arguments = listOf(navArgument("categoryId") { type = NavType.StringType }),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.SINGLE_CATEGORY_SCREEN.name}/{categoryId}"
+            })
         ) { backStackEntry ->
             val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
-            SingleCategoryScreen(
-                categoryId = categoryId,
-                navController = navController,
-            )
+            SingleCategoryScreen(categoryId = categoryId, navController = navController)
         }
 
         composable(
             route = NavigationItem.CreateClub.route,
-            arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
+            arguments = listOf(navArgument("categoryId") { type = NavType.StringType }),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.CREATE_CLUB_SCREEN.name}/{categoryId}"
+            })
         ) {
             val categoryId = it.arguments?.getString("categoryId") ?: ""
-            CreateClubScreen(
-                categoryId = categoryId,
-                userId = userId,
-                navController = navController
-            )
+            CreateClubScreen(categoryId = categoryId, userId = userId, navController = navController)
         }
 
-
-        composable(NavigationItem.AllClubs.route) {
-            AllClubScreen(
-                navController,
-
-            )
+        composable(
+            route = NavigationItem.AllClubs.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.All_CLUBS_SCREEN.name}" })
+        ) {
+            AllClubScreen(navController)
         }
 
         composable(
@@ -303,16 +319,14 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.CLUB_DETAIL_SCREEN.name}/{categoryId}/{clubId}"
+            })
         ) {
             val categoryId = it.arguments?.getString("categoryId") ?: ""
             val clubId = it.arguments?.getString("clubId") ?: ""
-            ClubDetailScreen(
-                navController = navController,
-                categoryId = categoryId,
-                clubId = clubId,
-                userId = userId
-            )
+            ClubDetailScreen(navController = navController, categoryId = categoryId, clubId = clubId, userId = userId)
         }
 
         composable(
@@ -320,16 +334,14 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.CLUB_SETTING_SCREEN.name}/{categoryId}/{clubId}"
+            })
         ) {
             val categoryId = it.arguments?.getString("categoryId") ?: ""
             val clubId = it.arguments?.getString("clubId") ?: ""
-            ClubSettingScreen(
-                navController = navController,
-                categoryId = categoryId,
-                clubId = clubId,
-                userId = userId
-            )
+            ClubSettingScreen(navController = navController, categoryId = categoryId, clubId = clubId, userId = userId)
         }
 
         composable(
@@ -337,15 +349,14 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.EDIT_CLUB_SCREEN.name}/{categoryId}/{clubId}"
+            })
         ) {
             val categoryId = it.arguments?.getString("categoryId") ?: ""
             val clubId = it.arguments?.getString("clubId") ?: ""
-            EditClubDetailScreen(
-                navController = navController,
-                categoryId = categoryId,
-                clubId = clubId,
-            )
+            EditClubDetailScreen(navController = navController, categoryId = categoryId, clubId = clubId)
         }
 
         composable(
@@ -353,16 +364,14 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.MANAGE_CLUB_ROLES.name}/{categoryId}/{clubId}"
+            })
         ) {
             val categoryId = it.arguments?.getString("categoryId") ?: ""
             val clubId = it.arguments?.getString("clubId") ?: ""
-            ManageClubRolesScreen(
-                categoryId = categoryId,
-                clubId = clubId,
-                currentUserId = userId,
-                navController
-            )
+            ManageClubRolesScreen(categoryId = categoryId, clubId = clubId, currentUserId = userId, navController)
         }
 
         composable(
@@ -370,16 +379,14 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.CREATE_EVENT_SCREEN.name}/{categoryId}/{clubId}"
+            })
         ) {
             val categoryId = it.arguments?.getString("categoryId") ?: ""
             val clubId = it.arguments?.getString("clubId") ?: ""
-            CreateEventScreen(
-                navController = navController,
-                categoryId = categoryId,
-                clubId = clubId,
-                userId = userId
-            )
+            CreateEventScreen(navController = navController, categoryId = categoryId, clubId = clubId, userId = userId)
         }
 
         composable(
@@ -388,18 +395,16 @@ fun AppNavigation(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType },
                 navArgument("eventId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.EVENT_DETAIL_SCREEN.name}/{categoryId}/{clubId}/{eventId}"
+            })
         ) { backStackEntry ->
             val args = backStackEntry.arguments!!
             val categoryId = args.getString("categoryId") ?: ""
             val clubId = args.getString("clubId") ?: ""
             val eventId = args.getString("eventId") ?: ""
-            EventDetailScreen(
-                navController = navController,
-                categoryId = categoryId,
-                clubId = clubId,
-                eventId = eventId
-            )
+            EventDetailScreen(navController = navController, categoryId = categoryId, clubId = clubId, eventId = eventId)
         }
 
         composable(
@@ -408,19 +413,16 @@ fun AppNavigation(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType },
                 navArgument("eventId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.EVENT_REGISTRATION_SCREEN.name}/{categoryId}/{clubId}/{eventId}"
+            })
         ) {
             val args = it.arguments!!
             val categoryId = args.getString("categoryId") ?: ""
             val clubId = args.getString("clubId") ?: ""
             val eventId = args.getString("eventId") ?: ""
-            EventRegistrationScreen(
-                navController = navController,
-                categoryId = categoryId,
-                clubId = clubId,
-                eventId = eventId,
-                userId = userId
-            )
+            EventRegistrationScreen(navController = navController, categoryId = categoryId, clubId = clubId, eventId = eventId, userId = userId)
         }
 
         composable(
@@ -429,18 +431,16 @@ fun AppNavigation(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType },
                 navArgument("eventId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.EVENT_SETTING_SCREEN.name}/{categoryId}/{clubId}/{eventId}"
+            })
         ) {
             val args = it.arguments!!
             val categoryId = args.getString("categoryId") ?: ""
             val clubId = args.getString("clubId") ?: ""
             val eventId = args.getString("eventId") ?: ""
-            EventSettingScreen(
-                navController = navController,
-                categoryId = categoryId,
-                clubId = clubId,
-                eventId = eventId
-            )
+            EventSettingScreen(navController = navController, categoryId = categoryId, clubId = clubId, eventId = eventId)
         }
 
         composable(
@@ -449,19 +449,16 @@ fun AppNavigation(
                 navArgument("categoryId") { type = NavType.StringType },
                 navArgument("clubId") { type = NavType.StringType },
                 navArgument("eventId") { type = NavType.StringType }
-            )
-        ){
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.ALL_TEAMS_FOR_EVENT.name}/{categoryId}/{clubId}/{eventId}"
+            })
+        ) {
             val args = it.arguments!!
             val categoryId = args.getString("categoryId") ?: ""
             val clubId = args.getString("clubId") ?: ""
             val eventId = args.getString("eventId") ?: ""
-
-            AllTeamsForEventScreen(
-                navController = navController,
-                categoryId = categoryId,
-                clubId = clubId,
-                eventId = eventId
-            )
+            AllTeamsForEventScreen(navController = navController, categoryId = categoryId, clubId = clubId, eventId = eventId)
         }
 
         composable(
@@ -469,36 +466,56 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("ticketId") { type = NavType.StringType },
                 navArgument("teamId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.TEAM_DETAIL_SCREEN.name}/{ticketId}/{teamId}"
+            })
         ) {
             val ticketId = it.arguments?.getString("ticketId") ?: ""
             val teamId = it.arguments?.getString("teamId") ?: ""
-
-            TeamDetailedScreen(
-                ticketId = ticketId,
-                teamId= teamId,
-                navController = navController
-            )
-
+            TeamDetailedScreen(ticketId = ticketId, teamId = teamId, navController = navController)
         }
-        composable(NavigationItem.Chats.route) {
+
+        composable(
+            route = NavigationItem.Chats.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.CHATS.name}" })
+        ) {
             ChatScreen(navController)
         }
-        composable(NavigationItem.Profile.route) {
+
+        composable(
+            route = NavigationItem.Profile.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.PROFILE.name}" })
+        ) {
             ProfileScreen(navController)
         }
 
-        //User
-        composable(NavigationItem.UserTicket.route) {
-            UserTicketScreen(navController,userId)
+        // User Screens
+        composable(
+            route = NavigationItem.UserTicket.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.User_TICKET_SCREEN.name}" })
+        ) {
+            UserTicketScreen(navController, userId)
         }
-        composable(NavigationItem.UserEvent.route) {
+
+        composable(
+            route = NavigationItem.UserEvent.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.User_EVENT_SCREEN.name}" })
+        ) {
             ProfileScreen(navController)
         }
-        composable(NavigationItem.UserClub.route) {
+
+        composable(
+            route = NavigationItem.UserClub.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.User_CLUB_SCREEN.name}" })
+        ) {
             ProfileScreen(navController)
         }
-        composable(NavigationItem.EditProfile.route) {
+
+        composable(
+            route = NavigationItem.EditProfile.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "sitevent://app/${Screen.EDIT_PROFILE_SCREEN.name}" })
+        ) {
             ProfileScreen(navController)
         }
 
@@ -507,16 +524,16 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("userId") { type = NavType.StringType },
                 navArgument("ticketId") { type = NavType.StringType }
-            )
+            ),
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "sitevent://app/${Screen.USER_TICKET_DETAIL_SCREEN.name}/{userId}/{ticketId}"
+            })
         ) {
             val userId = it.arguments?.getString("userId") ?: ""
             val ticketId = it.arguments?.getString("ticketId") ?: ""
-            UserTicketDetailedScreen(
-                userId = userId,
-                ticketId = ticketId,
-                navController = navController
-            )
+            UserTicketDetailedScreen(userId = userId, ticketId = ticketId, navController = navController)
         }
+
 
         composable(NavigationItem.PrivacyPolicy.route) {
             PrivacyPolicyScreen(navController)
@@ -527,30 +544,12 @@ fun AppNavigation(
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-
     val tabs = listOf(
-        BottomNavigationItem(
-            "Home",
-            Icons.Default.Home,
-            NavigationItem.Home.route
-        ),
-        BottomNavigationItem(
-            "Clubs",
-            Icons.Default.Groups,
-            NavigationItem.AllClubs.route
-        ),
-        BottomNavigationItem(
-            "Chats",
-            Icons.AutoMirrored.Filled.Chat,
-            NavigationItem.Chats.route
-        ),
-        BottomNavigationItem(
-            "Profile",
-            Icons.Default.Person,
-            NavigationItem.Profile.route
-        )
+        BottomNavigationItem("Home", Icons.Default.Home, NavigationItem.Home.route),
+        BottomNavigationItem("Clubs", Icons.Default.Groups, NavigationItem.AllClubs.route),
+        BottomNavigationItem("Chats", Icons.AutoMirrored.Filled.Chat, NavigationItem.Chats.route),
+        BottomNavigationItem("Profile", Icons.Default.Person, NavigationItem.Profile.route)
     )
-
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -586,5 +585,6 @@ fun BottomNavigationBar(navController: NavController) {
 data class BottomNavigationItem(
     val title: String,
     val icon: ImageVector,
-    val route: String,
+    val route: String
 )
+
