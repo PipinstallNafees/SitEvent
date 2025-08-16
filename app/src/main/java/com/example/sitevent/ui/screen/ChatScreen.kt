@@ -1,10 +1,15 @@
 package com.example.sitevent.ui.screen
 
+
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +28,7 @@ fun ChatScreen(
     var message by remember { mutableStateOf("") }
     val messages = remember { mutableStateListOf<String>() }
 
+
     BottomBarScaffold(navController) { padding ->
         Column(
             modifier = Modifier
@@ -31,6 +37,7 @@ fun ChatScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             LazyColumn(
                 modifier = Modifier.weight(1f).fillMaxSize(),
                 reverseLayout = true
@@ -60,6 +67,7 @@ fun ChatScreen(
                 ) {
                     Text("Send")
                 }
+
             }
         }
     }
