@@ -8,15 +8,30 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import com.example.sitevent.MainActivity
 import com.example.sitevent.R
+import com.google.firebase.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.google.firebase.messaging.messaging
+import javax.inject.Inject
 import kotlin.random.Random
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
+
+    @Inject
+    lateinit var firebaseMessaging: FirebaseMessaging
+
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM", "New token: $token")
-        // Send token to your app server for targeting specific devices
+        firebaseMessaging.subscribeToTopic("chat")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d("FCM", "Subscribed to topic: chat")
+                } else {
+                    Log.e("FCM", "Subscription failed", task.exception)
+                }
+            }
     }
 
     // MyFirebaseMessagingService.kt
@@ -24,7 +39,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        // ✅ FCM data payload
         val payload = remoteMessage.data
         val fcmNotification = remoteMessage.notification
 
