@@ -2,6 +2,7 @@ package com.example.sitevent.di
 
 import android.app.Application
 import android.content.Context
+import com.example.sitevent.Notification.FirebaseMessaging.FcmApi
 import com.example.sitevent.data.repository.Inteface.AuthRepository
 import com.example.sitevent.data.repository.Implementation.AuthRepositoryImpl
 import com.example.sitevent.data.repository.Inteface.ClubCategoryRepository
@@ -10,10 +11,12 @@ import com.example.sitevent.data.repository.Inteface.ClubRepository
 import com.example.sitevent.data.repository.Implementation.ClubRepositoryImpl
 import com.example.sitevent.data.repository.Inteface.EventRepository
 import com.example.sitevent.data.repository.Implementation.EventRepositoryImpl
+import com.example.sitevent.data.repository.Implementation.FcmRepositoryImpl
 import com.example.sitevent.data.repository.Implementation.SubEventRepositoryImpl
 import com.example.sitevent.data.repository.Implementation.TicketRepositoryImpl
 import com.example.sitevent.data.repository.Inteface.UserRepository
 import com.example.sitevent.data.repository.Implementation.UserRepositoryImpl
+import com.example.sitevent.data.repository.Inteface.FcmRepository
 import com.example.sitevent.data.repository.Inteface.SubEventRepository
 import com.example.sitevent.data.repository.Inteface.TicketRepository
 import com.google.firebase.Firebase
@@ -27,6 +30,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
@@ -112,6 +117,18 @@ object AppModule {
     ): SubEventRepository {
         return SubEventRepositoryImpl(firestore)
     }
+
+    @Provides
+    @Singleton
+    fun provideFcmApi(): FcmApi = Retrofit.Builder()
+        .baseUrl("https://siteventnotificationserver.onrender.com")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(FcmApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideFcmRepository(api: FcmApi): FcmRepository = FcmRepositoryImpl(api)
 
 
 }

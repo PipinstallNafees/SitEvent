@@ -33,4 +33,3 @@ firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messa
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
