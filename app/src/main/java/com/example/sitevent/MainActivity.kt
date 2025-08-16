@@ -28,6 +28,12 @@ import com.example.sitevent.ui.theme.SitEventTheme
 import com.example.sitevent.ui.viewModel.FcmViewModel
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.sitevent.data.ThemePreferenceManager
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -51,9 +57,20 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+
             SitEventTheme {
                 val controller = rememberNavController()
                 navController = controller
+
+            val themePreferenceManager = ThemePreferenceManager(this)
+            val themePref by themePreferenceManager.themeFlow.collectAsState(initial = "System")
+            val darkTheme = when (themePref) {
+                "Light" -> false
+                "Dark" -> true
+                else -> isSystemInDarkTheme()
+            }
+           
+
 
                 // ✅ Handle deep link if app opened via notification
                 LaunchedEffect(Unit) {
@@ -71,6 +88,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)

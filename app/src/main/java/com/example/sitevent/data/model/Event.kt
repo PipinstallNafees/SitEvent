@@ -7,6 +7,7 @@ enum class EventRole { ADMIN, OC, MOD, PARTICIPANT,COORDINATOR,SPEAKER }
 data class EventOrganizer(
     val userId: String = "",
     val role: EventRole = EventRole.COORDINATOR,
+    val clubName: String = "",
     val assignedAt: Long = System.currentTimeMillis(),
     val eventName: String = "",
 )
