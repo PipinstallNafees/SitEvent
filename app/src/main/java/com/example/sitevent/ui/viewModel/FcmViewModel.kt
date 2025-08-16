@@ -27,24 +27,6 @@ class FcmViewModel @Inject constructor(
     var state by mutableStateOf(ChatState())
         private set
 
-    init {
-        viewModelScope.launch {
-            Firebase.messaging.subscribeToTopic("chat").await()
-        }
-    }
-
-    fun onRemoteTokenChange(newToken: String) {
-        state = state.copy(remoteToken = newToken)
-    }
-
-    fun onSubmitRemoteToken() {
-        state = state.copy(isEnteringToken = false)
-    }
-
-    fun onMessageChange(message: String) {
-        state = state.copy(messageText = message)
-    }
-
     fun sendMessage(isBroadcast: Boolean) {
         viewModelScope.launch {
             val messageDto = SendMessageDto(
@@ -53,7 +35,7 @@ class FcmViewModel @Inject constructor(
                     title = "New message!",
                     body = state.messageText
                 ),
-                data = emptyMap() // ✅ fix: must be a Map
+                data = emptyMap()
             )
 
             try {
@@ -75,14 +57,14 @@ class FcmViewModel @Inject constructor(
         title: String,
         body: String,
         deepLinkRoute: String,
-        senderName: String = "System", // ✅ added senderName
+        senderName: String = "System",
         targetToken: String? = null
     ) {
         viewModelScope.launch {
             val messageDto = SendMessageDto(
                 to = targetToken,
                 notification = NotificationBody(title, body),
-                data = mapOf( // ✅ Must be a map
+                data = mapOf(
                     "deepLink" to deepLinkRoute,
                     "senderName" to senderName
                 )

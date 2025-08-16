@@ -67,7 +67,9 @@ import com.example.sitevent.data.model.Event
 import com.example.sitevent.data.model.EventMode
 import com.example.sitevent.data.model.EventOrganizer
 import com.example.sitevent.data.model.EventRole
+import com.example.sitevent.ui.Navigation.Screen
 import com.example.sitevent.ui.viewModel.EventViewModel
+import com.example.sitevent.ui.viewModel.FcmViewModel
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -85,6 +87,7 @@ fun CreateEventScreen(
     clubId: String,
     userId: String,
     viewModel: EventViewModel = hiltViewModel(),
+    fcmViewModel: FcmViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -151,6 +154,7 @@ fun CreateEventScreen(
             else -> Unit
         }
     }
+    val id = System.currentTimeMillis().toString()
 
     Scaffold(
         topBar = {
@@ -185,6 +189,7 @@ fun CreateEventScreen(
 
                         viewModel.createEvent(
                             Event(
+                                eventId = id,
                                 title = title,
                                 description = description,
                                 about = about.ifBlank { null },
@@ -209,6 +214,11 @@ fun CreateEventScreen(
                                 organizers = listOf(organizer),
 
                             )
+                        )
+                        fcmViewModel.sendCustomNotification(
+                            title,
+                            description,
+                            "${Screen.EVENT_DETAIL_SCREEN.name}/$categoryId/$clubId/$id",
                         )
                     },
                     modifier = Modifier.height(48.dp)
