@@ -12,15 +12,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.sitevent.settings.ThemePreferenceManager
 import com.example.sitevent.ui.Navigation.AppNavigation
 import com.example.sitevent.ui.Navigation.NavigationItem
 import com.example.sitevent.ui.Navigation.Screen
@@ -28,12 +33,6 @@ import com.example.sitevent.ui.theme.SitEventTheme
 import com.example.sitevent.ui.viewModel.FcmViewModel
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import com.example.sitevent.settings.ThemePreferenceManager
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -57,20 +56,19 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-
-            SitEventTheme {
-                val controller = rememberNavController()
-                navController = controller
-
-            val themePreferenceManager = ThemePreferenceManager(this)
+            // Determine theme from preference before applying theme
+            val context = LocalContext.current
+            val themePreferenceManager = androidx.compose.runtime.remember { ThemePreferenceManager(context) }
             val themePref by themePreferenceManager.themeFlow.collectAsState(initial = "System")
             val darkTheme = when (themePref) {
                 "Light" -> false
                 "Dark" -> true
                 else -> isSystemInDarkTheme()
             }
-           
 
+            SitEventTheme(darkTheme = darkTheme) {
+                val controller = rememberNavController()
+                navController = controller
 
                 // ✅ Handle deep link if app opened via notification
                 LaunchedEffect(Unit) {
