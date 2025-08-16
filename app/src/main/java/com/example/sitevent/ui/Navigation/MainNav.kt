@@ -50,8 +50,9 @@ import com.example.sitevent.ui.screen.ClubCategory.ClubCategorySettingScreen
 import com.example.sitevent.ui.screen.ClubCategory.CreateCategoryScreen
 import com.example.sitevent.ui.screen.ClubCategory.SingleCategoryScreen
 import com.example.sitevent.ui.screen.HomeScreen
+import com.example.sitevent.settings.PrivacyPolicyScreen
 import com.example.sitevent.ui.screen.ProfileScreen
-import com.example.sitevent.ui.screen.User.UserTicketDetailedScreen
+import com.example.sitevent.settings.UserTicketDetailedScreen
 import com.example.sitevent.ui.screen.User.UserTicketScreen
 import com.example.sitevent.ui.viewModel.AuthViewModel
 import com.example.sitevent.ui.viewModel.UserViewModel
@@ -90,6 +91,11 @@ enum class Screen {
     User_CLUB_SCREEN,
     EDIT_PROFILE_SCREEN,
     USER_TICKET_DETAIL_SCREEN,
+
+
+    // Privacy Policy
+    PRIVACY_POLICY_SCREEN,
+
 }
 
 sealed class NavigationItem(val route: String) {
@@ -193,6 +199,11 @@ sealed class NavigationItem(val route: String) {
             "${Screen.USER_TICKET_DETAIL_SCREEN.name}/$userId/$ticketId"
         fun createDeepLink(userId: String, ticketId: String) = "sitevent://app/${createRoute(userId, ticketId)}"
     }
+
+
+    object PrivacyPolicy : NavigationItem(Screen.PRIVACY_POLICY_SCREEN.name)
+
+
 }
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -522,6 +533,12 @@ fun AppNavigation(
             val ticketId = it.arguments?.getString("ticketId") ?: ""
             UserTicketDetailedScreen(userId = userId, ticketId = ticketId, navController = navController)
         }
+
+
+        composable(NavigationItem.PrivacyPolicy.route) {
+            PrivacyPolicyScreen(navController)
+        }
+
     }
 }
 
@@ -568,5 +585,6 @@ fun BottomNavigationBar(navController: NavController) {
 data class BottomNavigationItem(
     val title: String,
     val icon: ImageVector,
-    val route: String,
+    val route: String
 )
+

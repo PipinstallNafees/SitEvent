@@ -34,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.sitevent.data.model.Ticket
+import com.example.sitevent.settings.formatTimestamp
 import com.example.sitevent.ui.Navigation.NavigationItem
 import com.example.sitevent.ui.viewModel.TicketViewModel
 import com.example.sitevent.ui.viewModel.UserViewModel

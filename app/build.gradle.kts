@@ -108,6 +108,11 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
 
+
+    // For ImageBitmap
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("androidx.compose.ui:ui-graphics:1.5.0") // For ImageBitmap
+
     //retrofit
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
@@ -116,6 +121,7 @@ dependencies {
 
     // Coroutine support (Kotlinx coroutines)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
 
 
 }

@@ -26,7 +26,7 @@ import androidx.navigation.NavController
 import com.example.sitevent.data.Resource
 import com.example.sitevent.ui.Navigation.NavigationItem
 import com.example.sitevent.ui.viewModel.AuthViewModel
-import com.example.sitevent.data.ThemePreferenceManager
+import com.example.sitevent.settings.ThemePreferenceManager
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
@@ -52,6 +52,8 @@ fun ProfileScreen(
         }
     }
 
+    var showSignOutDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     BottomBarScaffold(navController) {padding->
         Column(
@@ -95,7 +97,7 @@ fun ProfileScreen(
                 SettingsItem(
                     icon = Icons.Default.PrivacyTip,
                     title = "Privacy Policy",
-                    onClick = { /* TODO */ }
+                    onClick = { navController.navigate(NavigationItem.PrivacyPolicy.route) }
                 )
             }
 
@@ -196,7 +198,7 @@ fun ProfileScreen(
                 contentColor = MaterialTheme.colorScheme.error
             ) {
                 OutlinedButton(
-                    onClick = { authViewModel.signOut() },
+                    onClick = { showSignOutDialog = true },
                     border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.5.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
@@ -209,7 +211,7 @@ fun ProfileScreen(
                     Text("Sign Out", fontWeight = FontWeight.SemiBold)
                 }
                 TextButton(
-                    onClick = { /* delete account */ },
+                    onClick = { showDeleteDialog = true },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
@@ -217,6 +219,39 @@ fun ProfileScreen(
                 ) {
                     Text("Delete Account")
                 }
+            }
+
+            if (showSignOutDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSignOutDialog = false },
+                    title = { Text("Sign Out") },
+                    text = { Text("Are you sure you want to sign out?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showSignOutDialog = false
+                            authViewModel.signOut()
+                        }) { Text("Yes") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showSignOutDialog = false }) { Text("Cancel") }
+                    }
+                )
+            }
+            if (showDeleteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    title = { Text("Delete Account") },
+                    text = { Text("Are you sure you want to delete your account? This action cannot be undone.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showDeleteDialog = false
+                            // TODO: Implement delete account logic
+                        }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+                    }
+                )
             }
         }
     }

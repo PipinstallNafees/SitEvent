@@ -30,7 +30,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.example.sitevent.data.ThemePreferenceManager
+import com.example.sitevent.settings.ThemePreferenceManager
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.runBlocking
