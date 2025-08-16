@@ -2,6 +2,7 @@ package com.example.sitevent.ui.screen
 
 
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.AirplaneTicket
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
@@ -175,14 +177,14 @@ fun ProfileScreen(
             SectionHeader("Support")
             SectionCard {
                 SettingsItem(
-                    icon = Icons.Default.Help,
+                    icon = Icons.AutoMirrored.Filled.Help,
                     title = "Help Center",
                     onClick = { /* TODO */ }
                 )
                 SettingsItem(
                     icon = Icons.Default.BugReport,
                     title = "Report a Bug",
-                    onClick = { /* TODO */ }
+                    onClick = { navController.navigate(NavigationItem.ReportBug.route) }
                 )
             }
 
@@ -199,7 +201,7 @@ fun ProfileScreen(
             ) {
                 OutlinedButton(
                     onClick = { showSignOutDialog = true },
-                    border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.5.dp),
+                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.error),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     ),

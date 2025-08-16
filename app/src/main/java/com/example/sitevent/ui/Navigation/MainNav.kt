@@ -54,6 +54,7 @@ import com.example.sitevent.settings.PrivacyPolicyScreen
 import com.example.sitevent.ui.screen.ProfileScreen
 import com.example.sitevent.settings.UserTicketDetailedScreen
 import com.example.sitevent.ui.screen.User.UserTicketScreen
+import com.example.sitevent.ui.screen.ReportBugScreen
 import com.example.sitevent.ui.viewModel.AuthViewModel
 import com.example.sitevent.ui.viewModel.UserViewModel
 
@@ -96,6 +97,8 @@ enum class Screen {
     // Privacy Policy
     PRIVACY_POLICY_SCREEN,
 
+    // Report Bug
+    REPORT_BUG_SCREEN,
 }
 
 sealed class NavigationItem(val route: String) {
@@ -202,8 +205,7 @@ sealed class NavigationItem(val route: String) {
 
 
     object PrivacyPolicy : NavigationItem(Screen.PRIVACY_POLICY_SCREEN.name)
-
-
+    object ReportBug : NavigationItem(Screen.REPORT_BUG_SCREEN.name)
 }
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -539,6 +541,10 @@ fun AppNavigation(
             PrivacyPolicyScreen(navController)
         }
 
+        composable(NavigationItem.ReportBug.route) {
+            ReportBugScreen(navController)
+        }
+
     }
 }
 
@@ -587,4 +593,3 @@ data class BottomNavigationItem(
     val icon: ImageVector,
     val route: String
 )
-
