@@ -29,23 +29,26 @@ import androidx.compose.material3.IconButton
 @Composable
 fun ChatScreen(
     navController: NavController
-){
+) {
     var message by remember { mutableStateOf("") }
     val messages = remember { mutableStateListOf<String>() }
 
-
     BottomBarScaffold(
-        navController,
+        navController = navController,
         topBar = {
             TopAppBar(
                 title = { Text("Chat") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
         }
+    ) { padding ->
 
         Column(
             modifier = Modifier
@@ -54,18 +57,26 @@ fun ChatScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
+            // Chat messages list
             LazyColumn(
-                modifier = Modifier.weight(1f).fillMaxSize(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
                 reverseLayout = true
             ) {
-                items(messages.reversed()) { msg ->
+                items(messages) { msg ->
                     Text(msg, modifier = Modifier.padding(8.dp))
                 }
             }
+
             Spacer(Modifier.height(8.dp))
+
+            // Message input row
             Row(
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(
                     value = message,
@@ -77,14 +88,13 @@ fun ChatScreen(
                 Button(
                     onClick = {
                         if (message.isNotBlank()) {
-                            messages.add(message)
+                            messages.add(0, message) // new msg at top
                             message = ""
                         }
                     }
                 ) {
                     Text("Send")
                 }
-
             }
         }
     }
