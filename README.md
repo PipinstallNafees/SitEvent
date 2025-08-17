@@ -3,6 +3,7 @@
 **Event Hive** is a modern Android application built with **Jetpack Compose** (Kotlin) and powered by **Firebase**.  
 It serves as a unified digital platform to streamline operations for college clubs — from event hosting and registrations to member management and centralized data tracking.
 
+
 ---
 
 ## 📸 Screenshots
